@@ -1,0 +1,21 @@
+HTTP/1.1 404 Not Found
+Date: Mon, 10 Aug 2026 14:47:14 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+CF-Ray: a28fcb64aca2b2b5-BLR
+CF-Cache-Status: DYNAMIC
+set-cookie: __cf_bm=VpKL.ir8KYgOFTLoLhTOW0tAXrVh_oQaIcxgvdA8D_c-1786373233.3875198-1.0.1.1-sd4afO6KecGP4fkCM7LkMyr6s09VmicVcPwuplTbgT4a261NHvLAvgsmNzeLa_FDt_fqrqCfpZEHPPGiS0.lsZBl0zRyh6oCgB_0f2Cn22f4KjngO4bBTPWHt_jBQ2HO; HttpOnly; SameSite=None; Secure; Path=/; Domain=supabase.co; Expires=Mon, 10 Aug 2026 15:17:14 GMT
+Server: cloudflare
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Vary: Accept-Encoding
+Proxy-Status: PostgREST; error=PGRST205
+X-Content-Type-Options: nosniff
+sb-gateway-version: 1
+sb-project-ref: wjbsebinfesretyniqcm
+sb-request-id: 019fec24-5af1-71db-86d9-f374b9a61618
+x-envoy-attempt-count: 1
+x-envoy-upstream-service-time: 45
+alt-svc: h3=":443"; ma=86400
+
+{"code":"PGRST205","details":null,"hint":null,"message":"Could not find the table 'public.general_enquiries' in the schema cache"}

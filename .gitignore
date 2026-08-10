@@ -1,0 +1,9 @@
+﻿node_modules/
+dist/
+tmp/
+supabase/.temp/
+*.log
+*.bin
+.env
+.env.*
+!.env.example
