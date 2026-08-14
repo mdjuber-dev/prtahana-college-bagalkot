@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, KeyRound, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase-config';
 import { siteConfig } from '@/lib/site-config';
+import { getCurrentAdminAccess } from '@/lib/admin-auth';
+import { loginAdmin } from '@/lib/api';
+import { getMediaUrl } from '@/lib/media-url';
 
 const UNAUTHORIZED_MESSAGE = 'You are not authorized to access the Admin Panel.';
 
@@ -19,6 +21,7 @@ export default function AdminLoginPage() {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     const state = location.state as { unauthorized?: boolean } | null;
@@ -28,48 +31,32 @@ export default function AdminLoginPage() {
     }
   }, [location.pathname, location.state, navigate]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      const access = await getCurrentAdminAccess();
+      if (!mounted) return;
+
+      if (access.status === 'authorized') {
+        const from = (location.state as { from?: string } | null)?.from || '/admin/dashboard';
+        navigate(from, { replace: true });
+        return;
+      }
+
+      setCheckingSession(false);
+    })();
+
+    return () => { mounted = false; };
+  }, [location.state, navigate]);
+
   const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      if (!supabase) {
-        setError('Supabase is not configured for this deployment. Please verify environment variables.');
-        return;
-      }
-      const res = await supabase.auth.signInWithPassword({ email, password });
-      if (res?.error) {
-        setError(res.error.message || 'Invalid email or password');
-        return;
-      }
-
-      const userId = res.data.user?.id;
-      if (!userId) {
-        setError('Authentication failed. Please try again.');
-        return;
-      }
-
-      const { data: adminRecord, error: adminError } = await supabase
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', userId)
-        .limit(1)
-        .maybeSingle();
-
-      if (adminError) {
-        console.error('Admin login admin_users query error:', adminError.message);
-        await supabase.auth.signOut();
-        setError('Unable to verify admin access. Please try again.');
-        return;
-      }
-
-      if (!adminRecord?.user_id) {
-        await supabase.auth.signOut();
-        setError(UNAUTHORIZED_MESSAGE);
-        return;
-      }
-
+      setError('');
+      setSuccess('');
+      try {
+      await loginAdmin(email, password);
       const from = (location.state as { from?: string } | null)?.from || '/admin/dashboard';
       navigate(from, { replace: true });
     } catch (err: any) {
@@ -85,23 +72,24 @@ export default function AdminLoginPage() {
     setResetLoading(true);
     setError('');
     try {
-      if (!supabase) throw new Error('Supabase not configured');
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/admin/login`,
-      });
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('Password reset link sent! Check your email inbox for instructions.');
-        setResetModalOpen(false);
-        setResetEmail('');
-      }
+      setError('Password reset is handled by the backend admin password. Ask the server admin to update ADMIN_PASSWORD.');
     } catch (err: any) {
       setError(err?.message || 'Failed to send reset email.');
     } finally {
       setResetLoading(false);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+        <div className="flex items-center gap-3 text-slate-200 text-sm font-medium">
+          <Loader2 className="animate-spin" size={18} />
+          Checking admin session...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -112,7 +100,7 @@ export default function AdminLoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center mb-4">
           <img
-            src={siteConfig.logo}
+            src={getMediaUrl(siteConfig.logo)}
             alt={`${siteConfig.name} logo`}
             className="w-16 h-16 object-contain"
             width={64}

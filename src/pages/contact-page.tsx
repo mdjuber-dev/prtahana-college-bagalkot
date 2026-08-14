@@ -7,7 +7,7 @@ import CTASection from '@/components/shared/cta-section';
 import { useCMS } from '@/lib/cms-context';
 import { getTelLink, getMapsLink, getWhatsAppLink } from '@/lib/communication';
 import { submitEnquiryToGoogleSheets } from '@/lib/google-script-config';
-import { submitGeneralEnquiryToSupabase } from '@/lib/submissions';
+import { submitGeneralEnquiryToNeon } from '@/lib/submissions';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
 
 interface ContactFormData {
@@ -115,7 +115,7 @@ export default function ContactPage() {
   };
 
   const attemptSubmission = async (data: ContactFormData): Promise<{ success: boolean; error?: string }> => {
-    const supaResult = await submitGeneralEnquiryToSupabase({
+    const neonResult = await submitGeneralEnquiryToNeon({
       name: data.name,
       mobile: data.mobile,
       email: data.email,
@@ -124,25 +124,24 @@ export default function ContactPage() {
       enquiryType: 'Contact Form',
     });
 
-    if (!supaResult.success) {
-      console.error('Supabase enquiry insert failed:', supaResult.error);
-      return { success: false, error: supaResult.error || 'Failed to save enquiry' };
+    if (!neonResult.success) {
+      console.error('Neon enquiry insert failed:', neonResult.error);
+      return { success: false, error: neonResult.error || 'Failed to save enquiry' };
     }
 
-    for (let attempt = 0; attempt < 3; attempt++) {
-      setRetryCount(attempt + 1);
-      const result = await submitEnquiryToGoogleSheets({
+    setRetryCount(0);
+    void submitEnquiryToGoogleSheets({
         name: data.name,
         mobile: data.mobile,
         email: data.email,
         course: data.course,
         message: data.message,
         enquiryType: 'Contact Form',
+      }).then((result) => {
+        if (!result.success) console.warn('Background contact enquiry Google Sheets sync failed:', result.error);
+      }).catch((sheetError) => {
+        console.warn('Background contact enquiry Google Sheets sync exception:', sheetError);
       });
-      if (result.success) return { success: true };
-      if (attempt < 2) await new Promise((r) => setTimeout(r, 1000 + attempt * 1000));
-      if (attempt === 2) console.error('Google Sheets enquiry sync failed:', result.error);
-    }
 
     return { success: true };
   };

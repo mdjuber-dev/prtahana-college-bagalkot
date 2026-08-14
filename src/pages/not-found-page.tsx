@@ -2,13 +2,14 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, GraduationCap, Mail, Compass } from 'lucide-react';
 import { siteConfig } from '@/lib/site-config';
+import { getMediaUrl } from '@/lib/media-url';
 
 export default function NotFoundPage() {
   return (
     <section className="min-h-screen flex items-center justify-center px-4 py-20 bg-secondary-50" aria-labelledby="not-found-title">
       <div className="max-w-lg w-full text-center">
         <motion.img
-          src={siteConfig.logo}
+          src={getMediaUrl(siteConfig.logo)}
           alt={`${siteConfig.name} logo`}
           className="w-16 h-16 mx-auto mb-8 object-contain"
           width={64}

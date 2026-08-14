@@ -1,4 +1,4 @@
-import { supabase } from './supabase-config';
+import { getSiteCmsRow, upsertSiteCms } from './neon-api';
 
 export interface SiteConfigRow {
   id: string;
@@ -26,19 +26,8 @@ export function sanitizeSiteConfigPayload(value: Record<string, unknown>): Recor
 }
 
 export async function fetchSiteConfig(): Promise<Record<string, unknown> | null> {
-  if (!supabase) return null;
   try {
-    const { data, error } = await supabase
-      .from('site_cms')
-      .select('value')
-      .eq('key', 'site_config')
-      .maybeSingle();
-
-    if (error) {
-      console.error('fetchSiteConfig error:', error.message);
-      return null;
-    }
-
+    const data = await getSiteCmsRow('site_config');
     const value = (data as Pick<SiteConfigRow, 'value'> | null)?.value ?? null;
     return value ? sanitizeSiteConfigHeroImages(value) : null;
   } catch (err) {
@@ -48,21 +37,6 @@ export async function fetchSiteConfig(): Promise<Record<string, unknown> | null>
 }
 
 export async function upsertSiteConfig(value: Record<string, unknown>) {
-  if (!supabase) throw new Error('Supabase not configured');
-
   const cmsValue = sanitizeSiteConfigPayload(value);
-  const row = {
-    key: 'site_config',
-    value: cmsValue,
-    updated_at: new Date().toISOString(),
-  };
-
-  const { data, error } = await supabase
-    .from('site_cms')
-    .upsert(row, { onConflict: 'key' })
-    .select()
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
+  return upsertSiteCms('site_config', cmsValue);
 }

@@ -4,7 +4,7 @@
  * ============================================================================
  * HOW TO CHANGE ABOUT IMAGES:
  * 1. Place about section images inside: public/images/about/
- *    Files: about-1.jpg, about-2.jpg, about-3.jpg, about-4.jpg, about-5.jpg
+ *    Files: prathanaclg-pht.png, about-2.jpg, about-3.jpg, about-4.jpg, about-5.jpg
  * 2. Update titles or descriptions below as needed.
  * 3. NO REACT/COMPONENT CODE NEEDS TO BE TOUCHED.
  * ============================================================================

@@ -11,6 +11,7 @@ import { galleryCategories as staticGalleryCategories } from '@/lib/gallery-data
 import { useCMS } from '@/lib/cms-context';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
 import { cn } from '@/lib/utils';
+import { getMediaUrl } from '@/lib/media-url';
 
 export default function GalleryPage() {
   const cms = useCMS();
@@ -18,11 +19,11 @@ export default function GalleryPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const galleryImages = cms.galleryImages?.length
-    ? cms.galleryImages.map((g) => ({ id: Number(g.id) || 0, src: g.src, alt: g.alt, title: g.title, category: g.category, width: g.width, height: g.height }))
+    ? cms.galleryImages.map((g) => ({ id: g.id || String(Math.random()), src: g.src, alt: g.alt, title: g.title, category: g.category, width: g.width, height: g.height }))
     : staticGalleryImages;
 
   const galleryVideos = cms.galleryVideos?.length
-    ? cms.galleryVideos.map((v) => ({ id: Number(v.id) || 0, src: v.src, poster: v.poster, alt: v.alt, title: v.title, category: v.category }))
+    ? cms.galleryVideos.map((v) => ({ id: v.id || String(Math.random()), src: v.src, poster: v.poster, alt: v.alt, title: v.title, category: v.category }))
     : staticGalleryVideos;
 
   const galleryCategories = cms.galleryCategories?.length ? cms.galleryCategories : staticGalleryCategories;
@@ -159,8 +160,8 @@ export default function GalleryPage() {
               >
                 <div className="relative aspect-video overflow-hidden group">
                   <video
-                    src={video.src}
-                    poster={video.poster}
+                    src={getMediaUrl(video.src)}
+                    poster={getMediaUrl(video.poster)}
                     controls
                     preload="none"
                     className="w-full h-full object-cover"

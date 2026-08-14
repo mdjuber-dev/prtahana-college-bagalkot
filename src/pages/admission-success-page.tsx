@@ -12,6 +12,7 @@ import { getTelLink, getWhatsAppLink } from '@/lib/communication';
 import { buildQRContent, type AdmissionFormData } from '@/lib/admission-config';
 import { generatePremiumPDF, type PDFData } from '@/lib/pdf-generator';
 import { sendAdmissionEmailNotification } from '@/lib/admission-notification';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface AdmissionSuccessState {
   applicationId?: string;
@@ -237,7 +238,7 @@ export default function AdmissionSuccessPage() {
             <div className="bg-gradient-hero p-6 md:p-8 text-center">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <img
-                  src={siteConfig.logo}
+                  src={getMediaUrl(siteConfig.logo)}
                   alt={`${siteConfig.name} logo`}
                   className="w-12 h-12 object-contain"
                 />

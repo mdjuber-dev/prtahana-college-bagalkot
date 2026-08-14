@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { fetchSiteConfig, upsertSiteConfig } from '@/lib/cms';
-import { supabase } from '@/lib/supabase-config';
+import { listChatbotKnowledge, syncChatbotKnowledge, listGalleryItems, createGalleryItem, updateGalleryItem, deleteGalleryItem } from '@/lib/api';
 import { useCMS, buildDefaultSiteCmsPayload } from '@/lib/cms-context';
 import { mergeStoredCmsWithDefaults } from '@/lib/cms-defaults';
 import { uploadCmsFile, uploadCmsPdf, resolveUploadCategory } from '@/lib/cms-upload';
+import { getMediaUrl } from '@/lib/media-url';
 import {
   Building2, BookOpen, FileText, GalleryHorizontal, Home,
   Save, Sparkles, UserCheck, Trophy, MessageSquare, Settings2,
@@ -13,7 +14,7 @@ import {
   DeleteButton, AddButton, setPath, reorderList, LeaderEditor,
 } from './cms-ui';
 import type {
-  CmsHeroSlide, CmsAchievementCard, CmsAchievementPoster, CmsGalleryItem,
+  CmsHeroSlide, CmsAchievementCard, CmsAchievementPoster,
   CmsFeeRow, CmsFacultyMember, CmsNavItem,
 } from '@/lib/cms-defaults';
 
@@ -51,6 +52,93 @@ export default function AdminSiteConfig() {
   const [newAnswer, setNewAnswer] = useState('');
   const [posterTab, setPosterTab] = useState<'NEET' | 'KCET' | 'JEE'>('NEET');
   const [initialChatbotIds, setInitialChatbotIds] = useState<string[]>([]);
+  const [adminGalleryItems, setAdminGalleryItems] = useState<any[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+
+  const loadAdminGallery = useCallback(async () => {
+    setGalleryLoading(true);
+    try {
+      const items = await listGalleryItems(true);
+      setAdminGalleryItems(items);
+    } catch (err) {
+      console.error('Failed to load gallery items:', err);
+    } finally {
+      setGalleryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'gallery') {
+      void loadAdminGallery();
+    }
+  }, [activeTab, loadAdminGallery]);
+
+  const handleAddGalleryItem = async () => {
+    try {
+      await createGalleryItem({
+        src: '',
+        title: '',
+        category: 'Campus',
+        type: 'image',
+        is_active: true,
+        sort_order: adminGalleryItems.length + 1,
+      });
+      await loadAdminGallery();
+      await cms.refresh();
+      setMessage({ type: 'success', text: 'Gallery item added.' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: 'Failed to add gallery item: ' + (err?.message || String(err)) });
+    }
+  };
+
+  const handleUpdateGalleryItem = async (id: string, updates: Record<string, unknown>) => {
+    try {
+      await updateGalleryItem(id, updates);
+      await loadAdminGallery();
+      await cms.refresh();
+    } catch (err: any) {
+      setMessage({ type: 'error', text: 'Failed to update gallery item: ' + (err?.message || String(err)) });
+    }
+  };
+
+  const handleDeleteGalleryItem = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this gallery item?')) return;
+    try {
+      await deleteGalleryItem(id);
+      await loadAdminGallery();
+      await cms.refresh();
+      setMessage({ type: 'success', text: 'Gallery item deleted.' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: 'Failed to delete gallery item: ' + (err?.message || String(err)) });
+    }
+  };
+
+  const handleReorderGalleryItem = async (index: number, direction: 'up' | 'down') => {
+    const items = [...adminGalleryItems];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= items.length) return;
+    [items[index], items[swapIndex]] = [items[swapIndex], items[index]];
+    const reordered = items.map((item, i) => ({ ...item, sort_order: i + 1 }));
+    try {
+      await Promise.all(reordered.map((item) => updateGalleryItem(item.id, { sort_order: item.sort_order })));
+      await loadAdminGallery();
+      await cms.refresh();
+    } catch (err: any) {
+      setMessage({ type: 'error', text: 'Failed to reorder gallery items: ' + (err?.message || String(err)) });
+    }
+  };
+
+  const handleGalleryUpload = async (id: string | null, file?: File | null): Promise<string | null> => {
+    if (!file) return null;
+    setUploading(true);
+    const { url, error } = await uploadCmsFile(file, 'gallery');
+    setUploading(false);
+    if (error) { setMessage({ type: 'error', text: error }); return null; }
+    if (id) {
+      await handleUpdateGalleryItem(id, { src: url });
+    }
+    return url;
+  };
 
   const loadCmsData = useCallback(async () => {
     setLoading(true);
@@ -58,9 +146,7 @@ export default function AdminSiteConfig() {
     try {
       const [stored, chatbotResult] = await Promise.all([
         fetchSiteConfig(),
-        supabase
-          ? supabase.from('chatbot_knowledge').select('*').order('sort_order', { ascending: true })
-          : Promise.resolve({ data: null, error: null }),
+        listChatbotKnowledge().then((data) => ({ data })).catch(() => ({ data: null })),
       ]);
 
       const merged = mergeStoredCmsWithDefaults(stored);
@@ -124,55 +210,20 @@ export default function AdminSiteConfig() {
   };
 
   const syncChatbotToDb = async (knowledge: any[]) => {
-    if (!supabase) throw new Error('Supabase not configured');
-    const errors: string[] = [];
-    const keptIds = new Set<string>();
-
-    for (const item of knowledge) {
-      const row = {
-        topic: item.topic,
-        keywords: item.keywords || [],
-        answer: item.answer,
-        category: item.category || 'General',
-        sort_order: item.display_order || 0,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (String(item.id).startsWith('kb-')) {
-        const { data: inserted, error } = await supabase
-          .from('chatbot_knowledge')
-          .insert(row)
-          .select('id')
-          .maybeSingle();
-        if (error) errors.push(error.message);
-        else if (inserted?.id) keptIds.add(inserted.id);
-      } else {
-        const { error } = await supabase.from('chatbot_knowledge').update(row).eq('id', item.id);
-        if (error) errors.push(error.message);
-        else keptIds.add(item.id);
-      }
-    }
-
-    const removedIds = initialChatbotIds.filter((id) => !knowledge.some((item) => item.id === id));
-    for (const id of removedIds) {
-      const { error } = await supabase.from('chatbot_knowledge').delete().eq('id', id);
-      if (error) errors.push(error.message);
-    }
-
-    if (errors.length) throw new Error(errors.join('; '));
-    setInitialChatbotIds([...keptIds]);
+    const keptIds = await syncChatbotKnowledge(knowledge, initialChatbotIds);
+    setInitialChatbotIds(keptIds);
   };
 
   const handleSaveAll = async () => {
     setSaving(true);
     setMessage(null);
     try {
-      const { chatbotKnowledge, ...cmsPayload } = data;
+      const { chatbotKnowledge, galleryItems, galleryVideos, ...cmsPayload } = data;
       await upsertSiteConfig(cmsPayload);
       await syncChatbotToDb(Array.isArray(chatbotKnowledge) ? chatbotKnowledge : []);
       await cms.refresh();
       await loadCmsData();
-      setMessage({ type: 'success', text: 'All CMS changes saved successfully to Supabase!' });
+      setMessage({ type: 'success', text: 'All CMS changes saved successfully!' });
     } catch (err: any) {
       setMessage({ type: 'error', text: 'Save failed: ' + (err?.message || String(err)) });
     } finally {
@@ -183,7 +234,6 @@ export default function AdminSiteConfig() {
   const heroSlides: CmsHeroSlide[] = data.heroSlides || [];
   const achievementCards: CmsAchievementCard[] = data.achievementCards || [];
   const posterGalleries: Record<'NEET' | 'KCET' | 'JEE', CmsAchievementPoster[]> = data.posterGalleries || { NEET: [], KCET: [], JEE: [] };
-  const galleryItems: CmsGalleryItem[] = data.galleryItems || [];
   const feeRows: CmsFeeRow[] = data.feeRows || [];
   const faculty: CmsFacultyMember[] = data.faculty || [];
   const navItems: CmsNavItem[] = data.navItems || [];
@@ -197,7 +247,7 @@ export default function AdminSiteConfig() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border shadow-soft">
         <div>
-          <p className="text-xs font-bold text-primary-700 uppercase tracking-widest">Supabase Content Control</p>
+          <p className="text-xs font-bold text-primary-700 uppercase tracking-widest">Website Content Control</p>
           <h2 className="text-2xl font-extrabold text-secondary-900">Website CMS Portal</h2>
         </div>
         <button onClick={handleSaveAll} disabled={saving || uploading} className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-primary text-white font-bold text-sm rounded-xl hover:shadow-glow transition-all disabled:opacity-50">
@@ -401,7 +451,7 @@ export default function AdminSiteConfig() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
               {achievementCards.map((card, idx) => (
                 <div key={card.id} className="p-3 border rounded-xl space-y-2 text-xs">
-                  {card.photo && <img src={card.photo} alt="" className="w-full h-24 object-cover rounded-lg" />}
+                  {card.photo && <img src={getMediaUrl(card.photo)} alt="" className="w-full h-24 object-cover rounded-lg" />}
                   <input value={card.name} placeholder="Student Name" onChange={(e) => { const u = [...achievementCards]; u[idx] = { ...u[idx], name: e.target.value }; setValue('achievementCards', u); }} className="w-full p-2 border rounded" />
                   <input value={card.rank} placeholder="Rank" onChange={(e) => { const u = [...achievementCards]; u[idx] = { ...u[idx], rank: e.target.value }; setValue('achievementCards', u); }} className="w-full p-2 border rounded" />
                   <input value={card.score} placeholder="Score" onChange={(e) => { const u = [...achievementCards]; u[idx] = { ...u[idx], score: e.target.value }; setValue('achievementCards', u); }} className="w-full p-2 border rounded" />
@@ -423,7 +473,7 @@ export default function AdminSiteConfig() {
             <div className="grid sm:grid-cols-2 gap-3 mt-4">
               {(posterGalleries[posterTab] || []).map((poster, idx) => (
                 <div key={poster.id} className="p-3 border rounded-xl space-y-2">
-                  {poster.src && <img src={poster.src} alt="" className="w-full h-32 object-contain bg-secondary-50 rounded" />}
+                  {poster.src && <img src={getMediaUrl(poster.src)} alt="" className="w-full h-32 object-contain bg-secondary-50 rounded" />}
                   <input value={poster.title} placeholder="Title" onChange={(e) => { const list = [...(posterGalleries[posterTab] || [])]; list[idx] = { ...list[idx], title: e.target.value }; setValue('posterGalleries', { ...posterGalleries, [posterTab]: list }); }} className="w-full p-2 border rounded text-xs" />
                   <input value={poster.year || ''} placeholder="Year" onChange={(e) => { const list = [...(posterGalleries[posterTab] || [])]; list[idx] = { ...list[idx], year: e.target.value }; setValue('posterGalleries', { ...posterGalleries, [posterTab]: list }); }} className="w-full p-2 border rounded text-xs" />
                   <input type="file" accept="image/*" onChange={async (e) => { const url = await handleUploadImage(`posters-${posterTab}`, e.target.files?.[0]); if (url) { const list = [...(posterGalleries[posterTab] || [])]; list[idx] = { ...list[idx], src: url, alt: list[idx].title || posterTab }; setValue('posterGalleries', { ...posterGalleries, [posterTab]: list }); } }} className="text-xs" />
@@ -437,27 +487,45 @@ export default function AdminSiteConfig() {
 
       {activeTab === 'gallery' && (
         <Section title="Gallery — Images & Videos">
-          <AddButton label="Add Gallery Item" onClick={() => setValue('galleryItems', [...galleryItems, { id: `gal-${Date.now()}`, src: '', alt: '', title: '', category: 'Campus', type: 'image', is_active: true, display_order: galleryItems.length + 1 }])} />
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
-            {galleryItems.map((item, idx) => (
-              <div key={item.id} className="p-3 border rounded-xl space-y-2">
-                {item.src && item.type === 'image' && <img src={item.src} alt="" className="w-full h-24 object-cover rounded" />}
-                <input value={item.title} placeholder="Title" onChange={(e) => { const u = [...galleryItems]; u[idx] = { ...u[idx], title: e.target.value }; setValue('galleryItems', u); }} className="w-full p-2 border rounded text-xs" />
-                <select value={item.category} onChange={(e) => { const u = [...galleryItems]; u[idx] = { ...u[idx], category: e.target.value }; setValue('galleryItems', u); }} className="w-full p-2 border rounded text-xs"><option>Campus</option><option>Laboratories</option><option>Classrooms</option><option>Library</option><option>Events</option><option>Videos</option></select>
-                <select value={item.type} onChange={(e) => { const u = [...galleryItems]; u[idx] = { ...u[idx], type: e.target.value as 'image' | 'video' }; setValue('galleryItems', u); }} className="w-full p-2 border rounded text-xs"><option value="image">Image</option><option value="video">Video URL</option></select>
-                {item.type === 'image' ? (
-                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async (e) => { const url = await handleUploadImage('gallery', e.target.files?.[0]); if (url) { const u = [...galleryItems]; u[idx] = { ...u[idx], src: url }; setValue('galleryItems', u); } }} className="text-xs" />
-                ) : (
-                  <>
-                    <input value={item.src} placeholder="Video URL or upload file" onChange={(e) => { const u = [...galleryItems]; u[idx] = { ...u[idx], src: e.target.value }; setValue('galleryItems', u); }} className="w-full p-2 border rounded text-xs" />
-                    <input type="file" accept="video/mp4,video/webm" onChange={async (e) => { const url = await handleUploadImage('gallery', e.target.files?.[0]); if (url) { const u = [...galleryItems]; u[idx] = { ...u[idx], src: url, type: 'video' }; setValue('galleryItems', u); } }} className="text-xs" />
-                  </>
-                )}
-                <ToggleField label="Active" checked={item.is_active !== false} onChange={(v) => { const u = [...galleryItems]; u[idx] = { ...u[idx], is_active: v }; setValue('galleryItems', u); }} />
-                <DeleteButton onClick={() => setValue('galleryItems', galleryItems.filter((_, i) => i !== idx))} />
+          {galleryLoading ? (
+            <div className="text-center py-8 text-sm text-secondary-500 font-medium">Loading gallery items...</div>
+          ) : (
+            <>
+              <AddButton label="Add Gallery Item" onClick={handleAddGalleryItem} />
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                {adminGalleryItems.map((item, idx) => (
+                  <div key={item.id} className="p-3 border rounded-xl space-y-2">
+                    {item.src && item.type === 'image' && <img src={getMediaUrl(item.src)} alt="" className="w-full h-24 object-cover rounded" />}
+                    {item.type === 'video' && item.src && <video src={getMediaUrl(item.src)} poster={getMediaUrl(item.poster)} className="w-full h-24 object-cover rounded" controls preload="none" />}
+                    <input value={item.title} placeholder="Title" onChange={(e) => { const u = [...adminGalleryItems]; u[idx] = { ...u[idx], title: e.target.value }; setAdminGalleryItems(u); }} onBlur={(e) => handleUpdateGalleryItem(item.id, { title: e.target.value })} className="w-full p-2 border rounded text-xs" />
+                    <select value={item.category} onChange={(e) => handleUpdateGalleryItem(item.id, { category: e.target.value })} className="w-full p-2 border rounded text-xs"><option>Campus</option><option>Laboratories</option><option>Classrooms</option><option>Library</option><option>Events</option><option>Videos</option></select>
+                    <select value={item.type} onChange={(e) => handleUpdateGalleryItem(item.id, { type: e.target.value })} className="w-full p-2 border rounded text-xs"><option value="image">Image</option><option value="video">Video</option></select>
+                    {item.type === 'image' ? (
+                      <div className="space-y-2">
+                        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async (e) => { const url = await handleGalleryUpload(item.id, e.target.files?.[0]); if (url) { const u = [...adminGalleryItems]; u[idx] = { ...u[idx], src: url }; setAdminGalleryItems(u); } }} className="text-xs" />
+                        <input value={item.src} placeholder="Image URL" onChange={(e) => { const u = [...adminGalleryItems]; u[idx] = { ...u[idx], src: e.target.value }; setAdminGalleryItems(u); }} onBlur={(e) => handleUpdateGalleryItem(item.id, { src: e.target.value })} className="w-full p-2 border rounded text-xs" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <input value={item.src} placeholder="Video URL" onChange={(e) => { const u = [...adminGalleryItems]; u[idx] = { ...u[idx], src: e.target.value }; setAdminGalleryItems(u); }} onBlur={(e) => handleUpdateGalleryItem(item.id, { src: e.target.value })} className="w-full p-2 border rounded text-xs" />
+                        <input type="file" accept="video/mp4,video/webm" onChange={async (e) => { const url = await handleGalleryUpload(item.id, e.target.files?.[0]); if (url) { const u = [...adminGalleryItems]; u[idx] = { ...u[idx], src: url, type: 'video' }; setAdminGalleryItems(u); } }} className="text-xs" />
+                        <input value={item.poster || ''} placeholder="Poster URL" onChange={(e) => { const u = [...adminGalleryItems]; u[idx] = { ...u[idx], poster: e.target.value }; setAdminGalleryItems(u); }} onBlur={(e) => handleUpdateGalleryItem(item.id, { poster: e.target.value })} className="w-full p-2 border rounded text-xs" />
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <ToggleField label="Active" checked={item.is_active !== false} onChange={(v) => handleUpdateGalleryItem(item.id, { is_active: v })} />
+                      <DeleteButton onClick={() => handleDeleteGalleryItem(item.id)} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ReorderButtons disableUp={idx === 0} disableDown={idx === adminGalleryItems.length - 1}
+                        onUp={() => handleReorderGalleryItem(idx, 'up')}
+                        onDown={() => handleReorderGalleryItem(idx, 'down')} />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </Section>
       )}
 

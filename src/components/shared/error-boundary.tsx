@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { siteConfig } from '@/lib/site-config';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface Props { children: ReactNode; }
 interface State { hasError: boolean; }
@@ -42,7 +43,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             className="max-w-lg w-full text-center"
           >
             <img
-              src={siteConfig.logo}
+              src={getMediaUrl(siteConfig.logo)}
               alt={`${siteConfig.name} logo`}
               className="w-14 h-14 mx-auto mb-6 object-contain"
               width={56}

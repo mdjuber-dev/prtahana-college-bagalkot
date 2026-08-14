@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronUp, Copy, Check, Trash2, Plus } from 'lucide-react';
+import { getMediaUrl } from '@/lib/media-url';
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -39,7 +40,7 @@ export function ImageField({ label, value, onUpload }: { label: string; value?: 
     <label className="block">
       <span className="text-xs font-bold uppercase tracking-wider text-secondary-700">{label}</span>
       <div className="mt-2 flex gap-3 items-center">
-        {value && <img src={value} alt="" className="w-14 h-14 object-cover rounded-xl border shadow-sm" />}
+        {value && <img src={getMediaUrl(value)} alt="" className="w-14 h-14 object-cover rounded-xl border shadow-sm" />}
         <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => onUpload(e.target.files?.[0])} className="text-xs text-secondary-600 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-primary-50 file:text-primary-800 file:font-bold hover:file:bg-primary-100" />
       </div>
       {value && <input value={value} readOnly className="mt-2 p-2 border rounded-lg w-full text-xs bg-secondary-50 font-mono text-secondary-600" />}

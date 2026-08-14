@@ -4,6 +4,7 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCMS } from '@/lib/cms-context';
 import { cn } from '@/lib/utils';
+import { getMediaUrl } from '@/lib/media-url';
 
 export default function Navbar() {
   const cms = useCMS();
@@ -11,7 +12,17 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const config = cms.siteConfig;
-  const items = cms.navItems.filter((item) => item.path !== '/admission');
+  const navItemsWithCareers = cms.navItems.some((item) => item.path === '/careers')
+    ? cms.navItems
+    : [...cms.navItems, { label: 'Careers', path: '/careers' }];
+  const navOrder = ['/', '/about', '/courses', '/achievements', '/gallery', '/fee-structure', '/transport', '/contact', '/careers'];
+  const items = navItemsWithCareers
+    .filter((item) => item.path !== '/admission')
+    .sort((a, b) => {
+      const aIndex = navOrder.indexOf(a.path);
+      const bIndex = navOrder.indexOf(b.path);
+      return (aIndex === -1 ? navOrder.length : aIndex) - (bIndex === -1 ? navOrder.length : bIndex);
+    });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -36,13 +47,13 @@ export default function Navbar() {
             : 'glass-scrolled shadow-soft'
       )}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
+      <nav className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo + Name — properly centered vertically */}
           <Link to="/" className="flex items-center gap-3 shrink-0" aria-label={`${config.name} home`}>
             <div className="relative">
               <img
-                src={config.logo}
+                src={getMediaUrl(config.logo)}
                 alt={`${config.name} logo`}
                 className="w-10 h-10 md:w-12 md:h-12 object-contain shrink-0 rounded-full bg-white/40 backdrop-blur-sm p-0.5 border border-white/60 shadow-sm"
                 width={48}
@@ -66,14 +77,14 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-1">
-            <ul className="flex items-center gap-0.5">
+          <div className="hidden xl:flex min-w-0 flex-1 items-center justify-end gap-3 2xl:gap-6 pl-4 2xl:pl-6">
+            <ul className="flex min-w-0 items-center justify-center gap-[clamp(0.625rem,0.9vw,1.25rem)]">
               {items.map((item) => (
                 <li key={item.path}>
                   <Link
                     to={item.path}
                     className={cn(
-                      'relative px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300',
+                      'relative whitespace-nowrap px-2.5 py-2 text-sm font-semibold rounded-xl transition-all duration-300 2xl:px-3.5 2xl:py-2.5',
                       location.pathname === item.path
                         ? 'text-accent-600 bg-white/80 shadow-sm border border-primary-100/50'
                         : 'text-primary-800 hover:text-primary-900 hover:bg-white/50'
@@ -90,7 +101,7 @@ export default function Navbar() {
             </ul>
             <Link
               to="/admission"
-              className="ml-4 inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-accent hover:shadow-xl hover:shadow-accent-500/30 transition-all duration-300 hover:-translate-y-0.5 border border-accent-400/20"
+              className="inline-flex h-[60px] w-[112px] shrink-0 items-center justify-center gap-1.5 rounded-2xl text-sm font-bold text-white bg-gradient-accent hover:shadow-xl hover:shadow-accent-500/30 transition-all duration-300 hover:-translate-y-0.5 border border-accent-400/20"
             >
               Apply Now <ArrowRight size={16} />
             </Link>
@@ -98,7 +109,7 @@ export default function Navbar() {
 
           {/* Hamburger — aligned properly */}
           <button
-            className="lg:hidden p-2 -mr-2 rounded-xl text-primary-800 hover:bg-white/60 transition-colors flex items-center justify-center"
+            className="xl:hidden p-2 -mr-2 rounded-xl text-primary-800 hover:bg-white/60 transition-colors flex items-center justify-center"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
@@ -117,7 +128,7 @@ export default function Navbar() {
             animate={{ opacity: 1, height: 'auto', y: 0 }}
             exit={{ opacity: 0, height: 0, y: -10 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="lg:hidden glass-mobile border-t border-primary-100/60 overflow-hidden shadow-soft"
+            className="xl:hidden glass-mobile border-t border-primary-100/60 overflow-hidden shadow-soft"
           >
             <ul className="px-4 py-5 space-y-1 max-h-[calc(100vh-5rem)] overflow-y-auto">
               {items.map((item) => (

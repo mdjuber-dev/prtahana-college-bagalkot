@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Loader2, CheckCircle2 } from 'lucide-react';
 import { useCMS } from '@/lib/cms-context';
+import { getMediaUrl } from '@/lib/media-url';
 import { submitPopupEnquiryToGoogleSheets } from '@/lib/google-script-config';
-import { submitGeneralEnquiryToSupabase } from '@/lib/submissions';
+import { submitGeneralEnquiryToNeon } from '@/lib/submissions';
 
 const POPUP_SESSION_KEY = 'prarthana_popup_shown';
 
@@ -66,7 +67,7 @@ export default function AdmissionPopup() {
       const mobileNumber = formData.mobileNumber.trim();
       const courseInterested = formData.courseInterested;
 
-      const supabasePayload = {
+      const neonPayload = {
         name: studentName,
         mobile: mobileNumber,
         email: '',
@@ -82,22 +83,18 @@ export default function AdmissionPopup() {
         courseInterested,
       };
 
-      const [supabaseResult, sheetResult] = await Promise.all([
-        submitGeneralEnquiryToSupabase(supabasePayload),
-        submitPopupEnquiryToGoogleSheets(sheetPayload),
-      ]);
-
-      const errors: string[] = [];
-      if (!supabaseResult.success) {
-        errors.push(supabaseResult.error || 'Unable to save enquiry to Supabase.');
-      }
-      if (!sheetResult.success) {
-        errors.push(sheetResult.error || 'Unable to sync enquiry to Google Sheet.');
+      const neonResult = await submitGeneralEnquiryToNeon(neonPayload);
+      if (!neonResult.success) {
+        throw new Error(neonResult.error || 'Unable to save enquiry to college records.');
       }
 
-      if (errors.length > 0) {
-        throw new Error(errors.join(' '));
-      }
+      void submitPopupEnquiryToGoogleSheets(sheetPayload).then((sheetResult) => {
+        if (!sheetResult.success) {
+          console.warn('Background popup enquiry Google Sheets sync failed:', sheetResult.error);
+        }
+      }).catch((sheetError) => {
+        console.warn('Background popup enquiry Google Sheets sync exception:', sheetError);
+      });
 
       setSubmitted(true);
 
@@ -143,7 +140,7 @@ export default function AdmissionPopup() {
               >
                 <X size={22} />
               </button>
-              <img src={popup?.logo || config.logo} alt={`${config.name} logo`} className="w-16 h-16 mx-auto object-contain mb-3" width={64} height={64} />
+              <img src={getMediaUrl(popup?.logo || config.logo)} alt={`${config.name} logo`} className="w-16 h-16 mx-auto object-contain mb-3" width={64} height={64} />
               <h2 id="popup-title" className="text-xl md:text-2xl font-bold text-white">{popup?.title || 'Admission Enquiry'}</h2>
               <p className="text-white/80 text-sm mt-1">{popup?.subtitle || 'Enquire now and secure your seat!'}</p>
             </div>

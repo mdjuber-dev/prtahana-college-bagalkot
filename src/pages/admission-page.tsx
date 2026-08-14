@@ -13,7 +13,7 @@ import {
   fileToCompressedDataUrl, type AdmissionFormData,
 } from '@/lib/admission-config';
 import { submitToGoogleSheets } from '@/lib/google-script-config';
-import { submitAdmissionToSupabase } from '@/lib/submissions';
+import { submitAdmissionToNeon } from '@/lib/submissions';
 import { sendAdmissionEmailNotification } from '@/lib/admission-notification';
 import { cn } from '@/lib/utils';
 
@@ -160,20 +160,22 @@ export default function AdmissionPage() {
         status,
       };
 
-      const supabaseResult = await submitAdmissionToSupabase(admissionPayload);
-      if (!supabaseResult.success) {
-        setSubmitError(supabaseResult.error || 'Your application could not be saved. Please try again.');
+      const dbResult = await submitAdmissionToNeon(admissionPayload);
+      if (!dbResult.success) {
+        setSubmitError(dbResult.error || 'Your application could not be saved. Please try again.');
         setSubmitting(false);
         return;
       }
 
-      const sheetRow = buildSheetRow(formData, applicationId, referenceCode, submittedAt);
-      const sheetResult = await submitToGoogleSheets(sheetRow);
-      if (!sheetResult.success) {
-        console.error('Google Sheets admission sync failed:', sheetResult.error);
-        setSubmitError(sheetResult.error || 'Your application was saved, but we could not sync it to the admission Google Sheet. Please try again or contact the college.');
-        setSubmitting(false);
-        return;
+      // Non-blocking Google Sheets sync attempt
+      try {
+        const sheetRow = buildSheetRow(formData, applicationId, referenceCode, submittedAt);
+        const sheetResult = await submitToGoogleSheets(sheetRow);
+        if (!sheetResult.success) {
+          console.warn('Background Google Sheets sync notice:', sheetResult.error);
+        }
+      } catch (sheetErr) {
+        console.warn('Background Google Sheets sync exception:', sheetErr);
       }
 
       // PDF data structure

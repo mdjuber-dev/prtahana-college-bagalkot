@@ -213,7 +213,7 @@ export function buildDefaultSiteCmsPayload(): Record<string, unknown> {
       subtitle: 'Discover the story, mission, and values that make Prarthana PU Science College a leader in science education.',
       description: 'Prarthana PU Science College, Bagalkot has been a beacon of quality science education since 2015.',
       story: 'Founded in 2015, Prarthana PU Science College has grown into one of Bagalkot\'s most trusted institutions for PU science education.',
-      image: '/images/about/about-1.jpg',
+      image: '/images/about/prathanaclg-pht.png',
       is_active: true,
     },
     visionMission: {
@@ -309,7 +309,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-/** Merge Supabase CMS JSON with defaults — stored keys win; arrays replace defaults entirely. */
+/** Merge stored CMS JSON with defaults — stored keys win; arrays replace defaults entirely. */
 export function mergeStoredCmsWithDefaults(stored: Record<string, unknown> | null): Record<string, unknown> {
   const defaults = buildDefaultSiteCmsPayload();
   if (!stored) return defaults;

@@ -3,11 +3,12 @@ import SectionTitle from '@/components/shared/section-title';
 import GalleryCarousel from '@/components/carousels/gallery-carousel';
 import Lightbox from '@/components/gallery/lightbox';
 import GradientButton from '@/components/shared/gradient-button';
-import { galleryImages } from '@/data/gallery-images';
+import { useCMS } from '@/lib/cms-context';
 
 export default function CampusLife() {
+  const cms = useCMS();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const previewImages = galleryImages.slice(0, 12);
+  const previewImages = (cms.galleryImages || []).slice(0, 12).map((g) => ({ src: g.src, alt: g.alt, title: g.title, width: g.width, height: g.height }));
 
   return (
     <section className="py-16 md:py-24" aria-labelledby="campus-life-title">

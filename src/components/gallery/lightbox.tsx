@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface LightboxProps {
   images: { src: string; alt: string; title: string }[];
@@ -132,7 +133,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }: Lightbo
             onWheel={handleWheel}
           >
             <img
-              src={images[index].src}
+              src={getMediaUrl(images[index].src)}
               alt={images[index].alt}
               className="max-w-full max-h-[80vh] object-contain rounded-lg"
               loading="lazy"

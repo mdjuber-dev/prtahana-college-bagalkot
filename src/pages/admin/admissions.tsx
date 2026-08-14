@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, RefreshCw, Search, Trash2, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase-config';
+import { deleteAdmission, listAdmissions, updateAdmission } from '@/lib/api';
+import { getMediaUrl } from '@/lib/media-url';
 
 type AdmissionRow = Record<string, unknown> & {
   application_id?: string | null;
@@ -175,25 +176,13 @@ export default function AdminAdmissions() {
     setError('');
     setNotice('');
 
-    if (!supabase) {
-      setRows([]);
-      setError('Supabase is not configured.');
-      setLoading(false);
-      return;
-    }
-
-    const { data, error: fetchError } = await supabase
-      .from('admissions')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(500);
-
-    if (fetchError) {
+    try {
+      const data = await listAdmissions(500);
+      setRows((data as AdmissionRow[]) || []);
+    } catch (fetchError: any) {
       console.error('load admissions failed:', fetchError);
       setRows([]);
-      setError(fetchError.message);
-    } else {
-      setRows((data as AdmissionRow[]) || []);
+      setError(fetchError?.message || String(fetchError));
     }
 
     setLoading(false);
@@ -228,7 +217,7 @@ export default function AdminAdmissions() {
   };
 
   const updateStatus = async () => {
-    if (!supabase || !selected) return;
+    if (!selected) return;
 
     const identifier = getAdmissionIdentifier(selected);
     if (!identifier) {
@@ -240,31 +229,26 @@ export default function AdminAdmissions() {
     setError('');
     setNotice('');
 
-    const { data, error: updateError } = await supabase
-      .from('admissions')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq(identifier.column, identifier.value)
-      .select('*')
-      .maybeSingle();
-
-    if (updateError) {
-      console.error('update admission status failed:', updateError);
-      setError(updateError.message);
-    } else {
-      const updated = (data as AdmissionRow | null) || { ...selected, status };
+    try {
+      const updatedAt = new Date().toISOString();
+      const data = await updateAdmission(identifier.column, identifier.value, { status, updated_at: updatedAt });
+      const updated = (data as AdmissionRow | null) || { ...selected, status, updated_at: updatedAt };
       setSelected(updated);
       setRows((prev) => prev.map((row) => {
         const rowIdentifier = getAdmissionIdentifier(row);
         return rowIdentifier?.column === identifier.column && rowIdentifier.value === identifier.value ? updated : row;
       }));
       setNotice('Saved successfully.');
+    } catch (updateError: any) {
+      console.error('update admission status failed:', updateError);
+      setError(updateError?.message || String(updateError));
     }
 
     setSaving(false);
   };
 
   const confirmDelete = async () => {
-    if (!supabase || !deleteTarget) return;
+    if (!deleteTarget) return;
 
     const identifier = getAdmissionIdentifier(deleteTarget);
     if (!identifier) {
@@ -276,15 +260,8 @@ export default function AdminAdmissions() {
     setError('');
     setNotice('');
 
-    const { error: deleteError } = await supabase
-      .from('admissions')
-      .delete()
-      .eq(identifier.column, identifier.value);
-
-    if (deleteError) {
-      console.error('delete admission failed:', deleteError);
-      setError(deleteError.message);
-    } else {
+    try {
+      await deleteAdmission(identifier.column, identifier.value);
       setRows((prev) => prev.filter((row) => {
         const rowIdentifier = getAdmissionIdentifier(row);
         return !(rowIdentifier?.column === identifier.column && rowIdentifier.value === identifier.value);
@@ -298,6 +275,9 @@ export default function AdminAdmissions() {
       setDeleteTarget(null);
       setNotice('Admission deleted successfully.');
       await load();
+    } catch (deleteError: any) {
+      console.error('delete admission failed:', deleteError);
+      setError(deleteError?.message || String(deleteError));
     }
 
     setDeleting(false);
@@ -448,7 +428,7 @@ export default function AdminAdmissions() {
               <div className="mb-5 p-4 rounded-xl border bg-white">
                 <h4 className="font-bold text-secondary-900 mb-3">Uploaded Photo</h4>
                 {isImageSource(selected.photo_url) ? (
-                  <img src={String(selected.photo_url)} alt="Student upload" className="w-32 h-32 object-cover rounded-xl border" />
+                  <img src={getMediaUrl(String(selected.photo_url))} alt="Student upload" className="w-32 h-32 object-cover rounded-xl border" />
                 ) : isUrl(selected.photo_url) ? (
                   <a href={String(selected.photo_url)} target="_blank" rel="noopener noreferrer" className="text-primary-700 font-semibold underline">Open uploaded file</a>
                 ) : (

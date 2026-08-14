@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { siteConfig } from '@/lib/site-config';
 import { useCMS } from '@/lib/cms-context';
 import { getTelLink, getWhatsAppLink } from '@/lib/communication';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface ChatMessage {
   id: string;
@@ -398,7 +399,7 @@ export default function CollegeChatbot() {
                   <Sparkles size={20} className="text-accent-300" />
                 </div>
                 <img
-                  src={siteConfig.logo}
+                  src={getMediaUrl(siteConfig.logo)}
                   alt={`${siteConfig.name} logo`}
                   className="w-10 h-10 rounded-full bg-white object-contain p-1 flex-shrink-0 border border-white/40"
                   width={40}

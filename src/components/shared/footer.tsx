@@ -2,11 +2,14 @@ import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, Phone, Mail, MapPin, Lock } from 'lucide-react';
 import { useCMS } from '@/lib/cms-context';
 import { getTelLink, getMapsLink } from '@/lib/communication';
+import { getMediaUrl } from '@/lib/media-url';
 
 export default function Footer() {
   const cms = useCMS();
   const config = cms.siteConfig;
-  const items = cms.navItems;
+  const items = cms.navItems.some((item) => item.path === '/careers')
+    ? cms.navItems
+    : [...cms.navItems, { label: 'Careers', path: '/careers' }];
   const footer = cms.footer;
   return (
     <footer className="bg-secondary-900 text-secondary-300" aria-labelledby="footer-heading">
@@ -15,7 +18,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-3 mb-4" aria-label={`${config.name} home`}>
-              <img src={config.logo} alt={`${config.name} logo`} className="w-12 h-12 object-contain" width={48} height={48} />
+              <img src={getMediaUrl(config.logo)} alt={`${config.name} logo`} className="w-12 h-12 object-contain" width={48} height={48} />
               <div>
                 <span className="block text-base font-bold text-white leading-tight">{config.shortName?.split(' ')[0] || 'Prarthana'}</span>
                 <span className="block text-sm text-secondary-400 leading-tight">{config.shortName?.split(' ').slice(1).join(' ') || 'Science College'}</span>
@@ -56,11 +59,11 @@ export default function Footer() {
             <span>•</span>
             <Link
               to="/admin/login"
-              className="inline-flex items-center gap-1 hover:text-secondary-400 opacity-50 hover:opacity-90 transition-opacity"
-              aria-label="Admin Login"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary-800/60 hover:bg-secondary-800 text-secondary-400 hover:text-white transition-all text-xs font-medium border border-secondary-700/40"
+              aria-label="Admin Sign In"
             >
-              <Lock size={11} aria-hidden="true" />
-              Admin Login
+              <Lock size={12} aria-hidden="true" />
+              Admin Sign In
             </Link>
           </div>
         </div>

@@ -5,6 +5,7 @@ import GradientButton from '@/components/shared/gradient-button';
 import { fadeInUp, slideInLeft, slideInRight } from '@/lib/motion';
 import { aboutImages } from '@/data/about-images';
 import { useCMS } from '@/lib/cms-context';
+import { getMediaUrl } from '@/lib/media-url';
 
 export default function AboutPreview() {
   const cms = useCMS();
@@ -47,7 +48,7 @@ export default function AboutPreview() {
           >
             <div className="relative rounded-2xl overflow-hidden card-shadow">
               <img
-                src={imageSrc}
+                src={getMediaUrl(imageSrc)}
                 alt={about?.pageTitle || aboutImages[0].alt}
                 className="w-full h-72 sm:h-80 lg:h-96 object-cover"
                 loading="lazy"

@@ -13,6 +13,7 @@ import CampusVideos from '@/components/sections/campus-videos';
 import Testimonials from '@/components/sections/testimonials';
 import ManagementPreview from '@/components/sections/management-preview';
 import ContactPreview from '@/components/sections/contact-preview';
+import CareersPreview from '@/components/sections/careers-preview';
 import CTASection from '@/components/shared/cta-section';
 
 export default function HomePage() {
@@ -31,6 +32,7 @@ export default function HomePage() {
       <CampusFacilities />
       <CampusVideos />
       <Testimonials />
+      <CareersPreview />
       <ManagementPreview />
       <ContactPreview />
       <CTASection />

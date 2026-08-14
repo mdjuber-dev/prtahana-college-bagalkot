@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, type ImgHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { siteConfig } from '@/lib/site-config';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface SmartImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'onError'> {
   fallbackSrc?: string;
   aspectClass?: string;
 }
 
-const defaultFallback = '/images/about/about-1.jpg';
+const defaultFallback = '/images/about/prathanaclg-pht.png';
 
 export default function SmartImage({
   src,
@@ -45,7 +46,7 @@ export default function SmartImage({
     >
       <img
         ref={ref}
-        src={inView ? currentSrc : undefined}
+        src={inView ? getMediaUrl(currentSrc) : undefined}
         alt={alt}
         loading={loading}
         decoding="async"
@@ -64,7 +65,7 @@ export default function SmartImage({
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-secondary-100">
           <img
-            src={siteConfig.logo}
+            src={getMediaUrl(siteConfig.logo)}
             alt=""
             aria-hidden="true"
             className="w-12 h-12 object-contain opacity-30"

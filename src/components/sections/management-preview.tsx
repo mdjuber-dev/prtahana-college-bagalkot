@@ -5,6 +5,7 @@ import SectionTitle from '@/components/shared/section-title';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
 import { useCMS, type LeadershipProfile } from '@/lib/cms-context';
 import { cn } from '@/lib/utils';
+import { getMediaUrl } from '@/lib/media-url';
 
 const presidentFallback = {
   photo: '/management-1.jpg',
@@ -83,7 +84,7 @@ function LeaderCard({ role, profile, fallbackPhoto }: LeaderCardProps) {
               )}
             >
               <img
-                src={photoSrc}
+                src={getMediaUrl(photoSrc)}
                 alt={`${roleLabel} ${profile.name || 'Prarthana PU Science College'}`}
                 onError={() => photoSrc !== fallbackPhoto && setPhotoSrc(fallbackPhoto)}
                 className="absolute inset-0 w-full h-full object-cover"

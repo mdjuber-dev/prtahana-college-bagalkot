@@ -37,6 +37,7 @@ export const navItems: NavItem[] = [
   { label: 'Gallery', path: '/gallery' },
   { label: 'Fee Structure', path: '/fee-structure' },
   { label: 'Transport', path: '/transport' },
+  { label: 'Careers', path: '/careers' },
   { label: 'Admission', path: '/admission' },
   { label: 'Contact', path: '/contact' },
 ];
@@ -54,4 +55,5 @@ export const pageMeta: Record<string, PageMeta> = {
   '/admission': { title: 'Admissions Open 2026-27 | Prarthana PU Science College Bagalkot | Apply Online', description: 'Apply online for admission to Prarthana PU Science College Bagalkot. Admissions open for 2026-27.', keywords: 'Prarthana PU College admission, PU admission 2026 Bagalkot', canonical: '/admission' },
   '/admission-success': { title: 'Admission Application Submitted | Prarthana PU Science College Bagalkot', description: 'Your admission application has been successfully submitted.', keywords: 'Prarthana PU College admission success', canonical: '/admission-success' },
   '/contact': { title: 'Contact Prarthana PU Science College | Bagalkot, Karnataka | Phone, Email & Map', description: 'Contact Prarthana PU Science College Bagalkot — call, email, or visit our campus. Save enquiries directly to our records.', keywords: 'Contact Prarthana PU College, PU college phone Bagalkot', canonical: '/contact' },
+  '/careers': { title: 'Careers | Join Our Team | Prarthana PU Science College Bagalkot', description: 'View current career opportunities and apply to join Prarthana PU Science College Bagalkot.', keywords: 'Prarthana PU College careers, lecturer jobs Bagalkot, teaching jobs Bagalkot', canonical: '/careers' },
 };

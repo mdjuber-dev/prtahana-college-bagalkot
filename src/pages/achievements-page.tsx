@@ -16,6 +16,7 @@ import {
 import { useCMS } from '@/lib/cms-context';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
 import { cn } from '@/lib/utils';
+import { getMediaUrl } from '@/lib/media-url';
 
 const stats = [
   { icon: Trophy, value: '500+', label: 'Top Rank Holders' },
@@ -218,7 +219,7 @@ export default function AchievementsPage() {
                   >
                     <div className="relative aspect-square overflow-hidden">
                       <img
-                        src={achiever.photo}
+                        src={getMediaUrl(achiever.photo)}
                         alt={achiever.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         loading="lazy"
@@ -278,7 +279,7 @@ export default function AchievementsPage() {
                             generous room without cropping important content. */}
                         <div className="relative w-full bg-secondary-50 aspect-[4/5] flex items-center justify-center p-4">
                           <img
-                            src={poster.src}
+                            src={getMediaUrl(poster.src)}
                             alt={poster.alt}
                             title={poster.title}
                             className="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl transition-transform duration-500 group-hover:scale-[1.03]"

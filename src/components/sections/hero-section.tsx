@@ -5,6 +5,7 @@ import GradientButton from '@/components/shared/gradient-button';
 import { heroImages } from '@/data/hero-images';
 import { fadeInUp } from '@/lib/motion';
 import { useCMS } from '@/lib/cms-context';
+import { getMediaUrl } from '@/lib/media-url';
 
 const stats = [
   { value: '2015', label: 'Established' },
@@ -26,7 +27,7 @@ export default function HeroSection() {
       <HeroCarousel slides={slides} interval={4000}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.img
-            src={config.logo}
+            src={getMediaUrl(config.logo)}
             alt={`${config.name} logo`}
             className="w-20 h-20 md:w-24 md:h-24 mx-auto rounded-full object-contain mb-6 border-4 border-white/20 bg-white/10"
             width={96}

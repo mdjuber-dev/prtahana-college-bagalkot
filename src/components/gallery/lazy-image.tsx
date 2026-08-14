@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface LazyImageProps {
   src: string; alt: string; title?: string; className?: string;
@@ -30,7 +31,7 @@ export default function LazyImage({ src, alt, title, className, width, height, s
     >
       <img
         ref={ref}
-        src={inView ? src : undefined}
+        src={inView ? getMediaUrl(src) : undefined}
         alt={alt}
         title={title || alt}
         width={width}

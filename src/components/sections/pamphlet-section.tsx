@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import SectionTitle from '@/components/shared/section-title';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
 import { useCMS } from '@/lib/cms-context';
+import { getMediaUrl } from '@/lib/media-url';
 
 type PamphletSide = 'front' | 'back';
 
@@ -106,7 +107,7 @@ function PamphletCard({
             style={{ aspectRatio: '3 / 4' }}
           >
             <img
-              src={imgSrc}
+              src={getMediaUrl(imgSrc)}
               alt={`${label} - Prarthana PU Science College`}
               onError={handleError}
               className="absolute inset-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
@@ -140,9 +141,9 @@ function PamphletCard({
               <Maximize2 size={15} />
               View Full Image
             </button>
-            <a
-              href={imgSrc}
-              target="_blank"
+              <a
+                href={getMediaUrl(imgSrc)}
+                target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-bold text-sm text-secondary-800 bg-secondary-100 hover:bg-secondary-200 transition-colors border border-secondary-200"
             >
@@ -283,7 +284,7 @@ export default function PamphletSection() {
                 </div>
                 <div className="flex items-center gap-2">
                   <a
-                    href={zoomImg}
+                    href={getMediaUrl(zoomImg)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
@@ -295,7 +296,7 @@ export default function PamphletSection() {
                 </div>
               </div>
               <img
-                src={zoomImg}
+                src={getMediaUrl(zoomImg)}
                 onError={() => setZoomImg(zoomFallback)}
                 alt={`Prarthana PU Science College Pamphlet ${zoomSide === 'front' ? 'Front' : 'Back'} Side`}
                 className="w-full max-h-[85vh] object-contain bg-white"

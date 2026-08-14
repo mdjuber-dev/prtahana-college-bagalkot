@@ -1,4 +1,4 @@
-import { supabase } from './supabase-config';
+import { createGeneralEnquiry, listGeneralEnquiries, updateGeneralEnquiry } from './neon-api';
 
 /** Canonical table for home popup + contact general enquiries (NOT admissions). */
 export const GENERAL_ENQUIRIES_TABLE = 'general_enquiries';
@@ -47,56 +47,32 @@ export function buildGeneralEnquiryPayload(input: GeneralEnquiryInsert): Omit<Ge
 }
 
 export async function fetchGeneralEnquiries(limit = 500): Promise<{ data: GeneralEnquiryRow[]; error: string | null }> {
-  if (!supabase) return { data: [], error: 'Supabase is not configured.' };
-
-  const { data, error } = await supabase
-    .from(GENERAL_ENQUIRIES_TABLE)
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    console.error('fetchGeneralEnquiries error:', error.message);
-    return { data: [], error: error.message };
+  try {
+    const data = await listGeneralEnquiries(limit);
+    return { data: (data as GeneralEnquiryRow[]) || [], error: null };
+  } catch (error) {
+    console.error('fetchGeneralEnquiries error:', error);
+    return { data: [], error: error instanceof Error ? error.message : String(error) };
   }
-
-  return { data: (data as GeneralEnquiryRow[]) || [], error: null };
 }
 
 export async function insertGeneralEnquiry(input: GeneralEnquiryInsert): Promise<{ success: boolean; data?: GeneralEnquiryRow[]; error?: string }> {
-  if (!supabase) return { success: false, error: 'Supabase is not configured.' };
-
   try {
     const payload = buildGeneralEnquiryPayload(input);
-    const { data, error } = await supabase
-      .from(GENERAL_ENQUIRIES_TABLE)
-      .insert([payload])
-      .select();
-
-    if (error) {
-      console.error('insertGeneralEnquiry error:', error.message);
-      return { success: false, error: error.message };
-    }
-
+    const data = await createGeneralEnquiry(payload);
     return { success: true, data: data as GeneralEnquiryRow[] };
   } catch (err) {
     console.error('insertGeneralEnquiry unexpected error:', err);
-    return { success: false, error: String(err) };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
 export async function updateGeneralEnquiryStatus(id: string, status: string): Promise<{ success: boolean; error?: string }> {
-  if (!supabase) return { success: false, error: 'Supabase is not configured.' };
-
-  const { error } = await supabase
-    .from(GENERAL_ENQUIRIES_TABLE)
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', id);
-
-  if (error) {
-    console.error('updateGeneralEnquiryStatus error:', error.message);
-    return { success: false, error: error.message };
+  try {
+    await updateGeneralEnquiry(id, { status });
+    return { success: true };
+  } catch (error) {
+    console.error('updateGeneralEnquiryStatus error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
-
-  return { success: true };
 }

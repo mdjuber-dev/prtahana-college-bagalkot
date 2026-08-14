@@ -9,6 +9,7 @@ import CTASection from '@/components/shared/cta-section';
 import { useCMS } from '@/lib/cms-context';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
 import { aboutImages } from '@/data/about-images';
+import { getMediaUrl } from '@/lib/media-url';
 
 const coreValues = [
   { icon: BookOpen, title: 'Academic Excellence', description: 'Rigorous curriculum and dedicated teaching that help every student reach their full potential.' },
@@ -33,7 +34,7 @@ export default function AboutPage() {
   const about = cms.about;
   const visionMission = cms.visionMission;
   const config = cms.siteConfig;
-  const storyImage = about?.image || aboutImages[0]?.src || '/images/about/about-1.jpg';
+  const storyImage = about?.image || aboutImages[0]?.src || '/images/about/prathanaclg-pht.png';
 
   if (about?.is_active === false) {
     return (
@@ -80,7 +81,7 @@ export default function AboutPage() {
             >
               <div className="rounded-3xl overflow-hidden shadow-xl">
                 <img
-                  src={storyImage}
+                  src={getMediaUrl(storyImage)}
                   alt={about?.pageTitle || aboutImages[0].alt}
                   className="w-full h-[400px] md:h-[500px] object-cover"
                   loading="lazy"

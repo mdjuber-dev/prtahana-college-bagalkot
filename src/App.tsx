@@ -23,6 +23,8 @@ const TransportPage = lazy(() => import('@/pages/transport-page'));
 const AdmissionPage = lazy(() => import('@/pages/admission-page'));
 const AdmissionSuccessPage = lazy(() => import('@/pages/admission-success-page'));
 const ContactPage = lazy(() => import('@/pages/contact-page'));
+const CareersPage = lazy(() => import('@/pages/careers-page'));
+const CareerJobPage = lazy(() => import('@/pages/career-job-page'));
 const NotFoundPage = lazy(() => import('@/pages/not-found-page'));
 const AdminLoginPage = lazy(() => import('@/pages/admin/login-page'));
 const AdminAnalyticsPage = lazy(() => import('@/pages/admin/analytics-dashboard'));
@@ -33,6 +35,10 @@ const AdminAdmissionsPage = lazy(() => import('@/pages/admin/admissions'));
 const AdminEnquiriesPage = lazy(() => import('@/pages/admin/enquiries'));
 const AdminSiteConfigPage = lazy(() => import('@/pages/admin/cms/site-config'));
 const AdminSettingsPage = lazy(() => import('@/pages/admin/settings'));
+const AdminCareersPage = lazy(() => import('@/pages/admin/careers'));
+const AdminCareerApplicationsPage = lazy(() => import('@/pages/admin/career-applications'));
+const AdminUsersPage = lazy(() => import('@/pages/admin/admin-users'));
+const AdminMediaLibraryPage = lazy(() => import('@/pages/admin/media-library'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -90,6 +96,8 @@ function AppShell() {
             <Route path="/admission" element={<Suspense fallback={<PageSkeleton page="admission" />}><AdmissionPage /></Suspense>} />
             <Route path="/admission-success" element={<Suspense fallback={<PageSkeleton page="section" />}><AdmissionSuccessPage /></Suspense>} />
             <Route path="/contact" element={<Suspense fallback={<PageSkeleton page="section" />}><ContactPage /></Suspense>} />
+            <Route path="/careers" element={<Suspense fallback={<PageSkeleton page="section" />}><CareersPage /></Suspense>} />
+            <Route path="/careers/:slug" element={<Suspense fallback={<PageSkeleton page="section" />}><CareerJobPage /></Suspense>} />
             <Route path="/admin/login" element={<Suspense fallback={<PageSkeleton page="section" />}><AdminLoginPage /></Suspense>} />
 
             <Route element={<Suspense><AdminRoute /></Suspense>}>
@@ -99,7 +107,12 @@ function AppShell() {
                 <Route path="analytics" element={<Suspense fallback={<div>Loading...</div>}><AdminAnalyticsPage /></Suspense>} />
                 <Route path="admissions" element={<Suspense fallback={<div>Loading...</div>}><AdminAdmissionsPage /></Suspense>} />
                 <Route path="enquiries" element={<Suspense fallback={<div>Loading...</div>}><AdminEnquiriesPage /></Suspense>} />
+                <Route path="careers" element={<Suspense fallback={<div>Loading...</div>}><AdminCareersPage /></Suspense>} />
+                <Route path="careers/applications" element={<Suspense fallback={<div>Loading...</div>}><AdminCareerApplicationsPage /></Suspense>} />
+                <Route path="cms" element={<Navigate to="/admin/cms/site-config" replace />} />
                 <Route path="cms/site-config" element={<Suspense fallback={<div>Loading...</div>}><AdminSiteConfigPage /></Suspense>} />
+                <Route path="media-library" element={<Suspense fallback={<div>Loading...</div>}><AdminMediaLibraryPage /></Suspense>} />
+                <Route path="admin-users" element={<Suspense fallback={<div>Loading...</div>}><AdminUsersPage /></Suspense>} />
                 <Route path="settings" element={<Suspense fallback={<div>Loading...</div>}><AdminSettingsPage /></Suspense>} />
               </Route>
             </Route>

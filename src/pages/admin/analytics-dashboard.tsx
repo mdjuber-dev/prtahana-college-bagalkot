@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supabase-config';
+import { createDashboardConfig, deleteDashboardConfig, listDashboardConfigs, updateDashboardConfig } from '@/lib/neon-api';
 import { BarChart3, Plus, Trash2, Edit2, ExternalLink, ShieldAlert, CheckCircle2, Eye, Layout, AlertCircle } from 'lucide-react';
 
 interface DashboardConfig {
@@ -73,40 +73,17 @@ export default function AnalyticsDashboardAdmin() {
   }, [form.embed_url, form.provider]);
 
   const loadDashboards = async () => {
-    if (!supabase) {
-      setError('Supabase is not configured.');
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
-      let { data, error: fetchErr } = await supabase
-        .from('dashboard_configs')
-        .select('*')
-        .order('display_order', { ascending: true })
-        .order('created_at', { ascending: false });
-
-      if (fetchErr?.message?.includes('display_order')) {
-        const fallback = await supabase
-          .from('dashboard_configs')
-          .select('*')
-          .order('created_at', { ascending: false });
-        data = fallback.data;
-        fetchErr = fallback.error;
-      }
-
-      if (fetchErr) {
-        setError(fetchErr.message);
-      } else {
-        const rows = ((data as DashboardConfig[]) || []).sort(
-          (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999),
-        );
-        setItems(rows);
-        const defaultItem = rows.find((r) => r.is_default && r.status === 'enabled') || rows.find((r) => r.status === 'enabled') || rows[0];
-        if (defaultItem) {
-          setActiveDashboard(defaultItem);
-          setPreviewUrl(defaultItem.embed_url);
-        }
+      const data = await listDashboardConfigs();
+      const rows = ((data as DashboardConfig[]) || []).sort(
+        (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999),
+      );
+      setItems(rows);
+      const defaultItem = rows.find((r) => r.is_default && r.status === 'enabled') || rows.find((r) => r.status === 'enabled') || rows[0];
+      if (defaultItem) {
+        setActiveDashboard(defaultItem);
+        setPreviewUrl(defaultItem.embed_url);
       }
     } catch (err: any) {
       setError(err?.message || 'Failed to load dashboards');
@@ -121,7 +98,6 @@ export default function AnalyticsDashboardAdmin() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) return;
     setError('');
     setSuccess('');
 
@@ -148,19 +124,11 @@ export default function AnalyticsDashboardAdmin() {
         is_default: Boolean(form.is_default),
       };
 
-      const query = form.id
-        ? supabase.from('dashboard_configs').update(payload).eq('id', form.id)
-        : supabase.from('dashboard_configs').insert([payload]);
-
-      const { error: saveErr } = await query.select();
-
-      if (saveErr) {
-        setError(saveErr.message);
-      } else {
-        setSuccess(`Dashboard "${payload.name}" saved successfully.`);
-        setForm(emptyForm);
-        await loadDashboards();
-      }
+      if (form.id) await updateDashboardConfig(form.id, payload);
+      else await createDashboardConfig(payload);
+      setSuccess(`Dashboard "${payload.name}" saved successfully.`);
+      setForm(emptyForm);
+      await loadDashboards();
     } catch (err: any) {
       setError(err?.message || 'Failed to save dashboard configuration');
     } finally {
@@ -184,17 +152,17 @@ export default function AnalyticsDashboardAdmin() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!supabase || !confirm('Are you sure you want to delete this dashboard configuration?')) return;
-    const { error: delErr } = await supabase.from('dashboard_configs').delete().eq('id', id);
-    if (delErr) {
-      setError(delErr.message);
-    } else {
+    if (!confirm('Are you sure you want to delete this dashboard configuration?')) return;
+    try {
+      await deleteDashboardConfig(id);
       setSuccess('Dashboard configuration deleted.');
       if (activeDashboard?.id === id) {
         setActiveDashboard(null);
         setPreviewUrl('');
       }
       await loadDashboards();
+    } catch (delErr: any) {
+      setError(delErr?.message || String(delErr));
     }
   };
 

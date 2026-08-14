@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAutoCarousel } from '@/hooks/use-auto-carousel';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface HeroSlide { src: string; alt: string; title: string; }
 interface HeroCarouselProps {
@@ -35,7 +36,7 @@ export default function HeroCarousel({ slides, interval = 4000, children }: Hero
           style={{ willChange: 'opacity, transform' }}
         >
           <img
-            src={slides[index].src}
+            src={getMediaUrl(slides[index].src)}
             alt={slides[index].alt}
             className="w-full h-full object-cover"
             loading={index === 0 ? 'eager' : 'lazy'}

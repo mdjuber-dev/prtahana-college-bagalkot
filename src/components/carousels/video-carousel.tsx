@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAutoCarousel } from '@/hooks/use-auto-carousel';
 import type { GalleryVideo } from '@/lib/gallery-data';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface VideoCarouselProps {
   videos: GalleryVideo[];
@@ -154,8 +155,8 @@ export default function VideoCarousel({ videos, interval = 5000 }: VideoCarousel
               >
                 <video
                   ref={(el) => { videoRefs.current[i] = el; }}
-                  src={video.src}
-                  poster={video.poster}
+                  src={getMediaUrl(video.src)}
+                  poster={getMediaUrl(video.poster)}
                   className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
                   loop
                   muted
@@ -270,8 +271,8 @@ export default function VideoCarousel({ videos, interval = 5000 }: VideoCarousel
               {kind === 'mp4' ? (
                 <video
                   ref={lightboxVideoRef}
-                  src={current.src}
-                  poster={current.poster}
+                  src={getMediaUrl(current.src)}
+                  poster={getMediaUrl(current.poster)}
                   className="w-full h-full object-contain"
                   autoPlay
                   playsInline

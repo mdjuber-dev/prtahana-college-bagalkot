@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, VideoOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface SmartVideoProps {
   src: string;
@@ -31,7 +32,7 @@ export default function SmartVideo({ src, poster, title, className }: SmartVideo
       <div className={cn('relative rounded-2xl overflow-hidden bg-secondary-100 aspect-video flex flex-col items-center justify-center', className)}>
         {poster && (
           <img
-            src={poster}
+            src={getMediaUrl(poster)}
             alt={title}
             className="absolute inset-0 w-full h-full object-cover opacity-40"
             loading="lazy"
@@ -50,8 +51,8 @@ export default function SmartVideo({ src, poster, title, className }: SmartVideo
     <div className={cn('relative rounded-2xl overflow-hidden bg-secondary-100', !loaded && 'shimmer-bg', className)}>
       <video
         ref={ref}
-        src={inView ? src : undefined}
-        poster={poster}
+        src={inView ? getMediaUrl(src) : undefined}
+        poster={getMediaUrl(poster)}
         controls
         preload="none"
         onLoadedData={() => setLoaded(true)}

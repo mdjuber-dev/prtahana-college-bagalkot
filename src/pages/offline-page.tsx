@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { WifiOff, RefreshCw } from 'lucide-react';
 import { siteConfig } from '@/lib/site-config';
+import { getMediaUrl } from '@/lib/media-url';
 
 export default function OfflinePage() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -44,7 +45,7 @@ export default function OfflinePage() {
         className="max-w-md w-full text-center"
       >
         <img
-          src={siteConfig.logo}
+          src={getMediaUrl(siteConfig.logo)}
           alt={`${siteConfig.name} logo`}
           className="w-14 h-14 mx-auto mb-6 object-contain"
           width={56}

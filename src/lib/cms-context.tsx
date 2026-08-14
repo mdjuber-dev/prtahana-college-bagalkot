@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode, useState, useEffect, useMemo } from 'react';
 import { pageMeta as staticPageMeta } from './site-config';
 import { fetchSiteConfig } from './cms';
-import { supabase } from './supabase-config';
+import { listChatbotKnowledge, listGalleryItems } from './neon-api';
 import {
   buildDefaultSiteCmsPayload,
   mergeStoredCmsWithDefaults,
@@ -365,15 +365,15 @@ export function CMSProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [siteOverrides, setSiteOverrides] = useState<Record<string, unknown> | null>(null);
   const [dbChatbotKnowledge, setDbChatbotKnowledge] = useState<CMSChatbotKnowledge[]>([]);
+  const [dbGalleryItems, setDbGalleryItems] = useState<any[]>([]);
 
   const refresh = async () => {
     setLoading(true);
     try {
-      const [configResult, chatbotResult] = await Promise.all([
+      const [configResult, chatbotResult, galleryResult] = await Promise.all([
         fetchSiteConfig(),
-        supabase
-          ? supabase.from('chatbot_knowledge').select('*').order('sort_order', { ascending: true })
-          : Promise.resolve({ data: null, error: null }),
+        listChatbotKnowledge().then((data) => ({ data })).catch(() => ({ data: null })),
+        listGalleryItems().then((data) => ({ data })).catch(() => ({ data: null })),
       ]);
       setSiteOverrides(configResult);
       if (chatbotResult.data) {
@@ -388,6 +388,9 @@ export function CMSProvider({ children }: { children: ReactNode }) {
           })),
         );
       }
+      if (galleryResult.data) {
+        setDbGalleryItems(galleryResult.data as any[]);
+      }
     } catch (err) {
       console.error('CMSProvider refresh error:', err);
     } finally {
@@ -397,14 +400,51 @@ export function CMSProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { void refresh(); }, []);
 
+  const mapDbGalleryItems = (items: any[]) => {
+    const images: CMSGalleryImage[] = items
+      .filter((i) => i.type === 'image' || !i.type)
+      .map((g, idx) => ({
+        id: g.id,
+        src: g.src,
+        alt: g.alt || '',
+        title: g.title || '',
+        category: g.category || 'Campus',
+        width: g.width || 800,
+        height: g.height || 600,
+        sort_order: g.sort_order || idx + 1,
+      }));
+    const videos: CMSGalleryVideo[] = items
+      .filter((i) => i.type === 'video')
+      .map((v, idx) => ({
+        id: v.id,
+        src: v.src,
+        poster: v.poster || '',
+        alt: v.alt || '',
+        title: v.title || '',
+        category: v.category || 'Videos',
+        sort_order: v.sort_order || idx + 1,
+      }));
+    return { images, videos };
+  };
+
   const merged = useMemo(() => {
     const payload = siteOverrides ? mergeStoredCmsWithDefaults(siteOverrides) : null;
     const base = payload ? mergeCmsOverrides(defaultData, payload) : defaultData;
+
+    let galleryImages = base.galleryImages;
+    let galleryVideos = base.galleryVideos;
+
+    if (dbGalleryItems.length) {
+      const mapped = mapDbGalleryItems(dbGalleryItems);
+      galleryImages = mapped.images;
+      galleryVideos = mapped.videos;
+    }
+
     const knowledge = dbChatbotKnowledge.length
       ? dbChatbotKnowledge
       : base.chatbotKnowledge;
-    return { ...base, chatbotKnowledge: knowledge };
-  }, [siteOverrides, dbChatbotKnowledge]);
+    return { ...base, galleryImages, galleryVideos, chatbotKnowledge: knowledge };
+  }, [siteOverrides, dbChatbotKnowledge, dbGalleryItems]);
 
   return (
     <CMSContext.Provider value={{ ...merged, loading, refresh }}>

@@ -1,4 +1,3 @@
-import { supabase } from './supabase-config';
 import { buildEnquirySheetRow, generateEnquiryId, type EnquiryFormData } from './admission-config';
 
 /**
@@ -17,31 +16,6 @@ export const POPUP_GOOGLE_APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbxJTKB6Gi9sr7ZeY5sqOzxMcg2tQpri6pySVxxXl9LG5Iwq1fXDdgYQ-JeUfgb8aEC8/exec";
 
 async function postPayloadToSheets(payload: Record<string, string>, overrideUrl?: string): Promise<{ success: boolean; error?: string }> {
-  // 1. Primary Flow: Send via Supabase Edge Function Proxy if available
-  if (supabase) {
-    try {
-      const body = overrideUrl ? { ...payload, googleScriptUrl: overrideUrl } : payload;
-      const { data, error } = await supabase.functions.invoke('submit-to-google-sheets', {
-        body,
-      });
-
-      if (error) {
-        console.error('[GS] Supabase Edge Function error:', error.message);
-      } else if (data) {
-        if (data.success === false) {
-          const msg = data.message || data.error || 'Google Sheets returned failure';
-          console.error('[GS] Sheets write failed via Edge Function:', msg);
-          return { success: false, error: msg };
-        }
-        return { success: true };
-      }
-    } catch (err) {
-      console.error('[GS] Supabase edge function invocation error:', err);
-      // fall through to direct post below
-    }
-  }
-
-  // 2. Direct POST to Official Google Apps Script Web App Endpoint
   try {
     const directUrl = overrideUrl ?? GOOGLE_APPS_SCRIPT_URL;
     const response = await fetch(directUrl, {
