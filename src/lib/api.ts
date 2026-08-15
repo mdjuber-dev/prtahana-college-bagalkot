@@ -8,7 +8,7 @@ const getBaseUrl = (): string => {
   if (import.meta.env.DEV) {
     return 'http://localhost:3000';
   }
-  return '';
+  return 'https://prarthanaclgbgk.onrender.com';
 };
 
 export const API_URL = getBaseUrl();
