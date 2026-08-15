@@ -278,6 +278,9 @@ async function saveMediaFile(file, category) {
 
 // Serve uploaded files from Database (with local disk fallback)
 app.get("/uploads/:category/:filename", async (req, res) => {
+  if (req.params.category === "career-applications") {
+    return res.status(403).json({ success: false, error: "Access denied" });
+  }
   const publicUrl = `/uploads/${req.params.category}/${req.params.filename}`;
   try {
     const result = await queryWithRetry("SELECT mime_type, data FROM public.media_uploads WHERE url = $1 LIMIT 1", [publicUrl]);
@@ -298,7 +301,7 @@ app.get("/uploads/:category/:filename", async (req, res) => {
 
   const diskPath = path.join(uploadRoot, req.params.category, req.params.filename);
   try {
-    await fs.access(diskPath);
+    await fsPromises.access(diskPath);
     return res.sendFile(diskPath);
   } catch (e) {
     return res.status(404).send("Media asset not found");
@@ -687,6 +690,26 @@ app.patch("/api/general-enquiries/:id", requireAdmin, async (req, res) => {
   }
 });
 
+app.delete("/api/general-enquiries/:id", requireAdmin, async (req, res) => {
+  try {
+    const result = await queryWithRetry("DELETE FROM public.general_enquiries WHERE id = $1 RETURNING id", [req.params.id]);
+    if (!result.rows.length) return fail(res, 404, "Enquiry not found");
+    ok(res, true);
+  } catch (error) {
+    handleError(res, "general enquiry delete error", error);
+  }
+});
+
+app.delete("/api/enquiries/:id", requireAdmin, async (req, res) => {
+  try {
+    const result = await queryWithRetry("DELETE FROM public.general_enquiries WHERE id = $1 RETURNING id", [req.params.id]);
+    if (!result.rows.length) return fail(res, 404, "Enquiry not found");
+    ok(res, true);
+  } catch (error) {
+    handleError(res, "enquiry delete error", error);
+  }
+});
+
 function sanitizeJobPayload(body) {
   const payload = { ...body };
   payload.application_deadline = sanitizeDateOnly(payload.application_deadline);
@@ -832,6 +855,56 @@ app.patch("/api/career-applications/:id", requireAdmin, async (req, res) => {
   }
 });
 
+app.get("/api/career-applications/:id/resume", requireAdmin, async (req, res) => {
+  try {
+    const result = await queryWithRetry(
+      "SELECT resume_path, resume_file_name FROM public.career_applications WHERE id = $1 LIMIT 1",
+      [req.params.id],
+    );
+    if (!result.rows.length) return fail(res, 404, "Application not found");
+
+    const app = result.rows[0];
+    const resumePath = String(app.resume_path || "");
+    if (!resumePath) return fail(res, 404, "Resume not found");
+
+    let diskPath;
+    if (resumePath.startsWith("/uploads/career-applications/")) {
+      const filename = path.basename(resumePath);
+      diskPath = path.join(uploadRoot, "career-applications", filename);
+    } else if (resumePath.startsWith("resumes/")) {
+      return fail(res, 404, "Resume not found");
+    } else {
+      return fail(res, 400, "Invalid resume path");
+    }
+
+    const resolved = path.resolve(diskPath);
+    if (!resolved.startsWith(uploadRoot)) return fail(res, 400, "Invalid resume path");
+
+    try {
+      await fsPromises.access(resolved);
+    } catch {
+      return fail(res, 404, "Resume not found");
+    }
+
+    const ext = path.extname(resolved).toLowerCase();
+    const mimeTypes = {
+      ".pdf": "application/pdf",
+      ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+    const mimeType = mimeTypes[ext] || "application/octet-stream";
+    const fileName = String(app.resume_file_name || path.basename(resolved)).replace(/"/g, '\\"');
+    const disposition = req.query.download === "true" ? "attachment" : "inline";
+
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Content-Disposition", `${disposition}; filename="${fileName}"`);
+    return res.sendFile(resolved);
+  } catch (error) {
+    if (error?.code === "ENOENT") return fail(res, 404, "Resume not found");
+    handleError(res, "career resume serve error", error);
+  }
+});
+
 app.get("/api/career-resumes", requireAdmin, async (req, res) => {
   const resumePath = String(req.query.path || "");
   if (!resumePath.startsWith("/uploads/career-applications/")) return fail(res, 400, "Invalid resume path.");
@@ -971,6 +1044,12 @@ if (fs.existsSync(distDir)) {
   app.use(express.static(distDir, { maxAge: '1y', immutable: true }));
 }
 
+app.use('/uploads', (req, res, next) => {
+  if (req.path.startsWith('/career-applications/')) {
+    return res.status(403).json({ success: false, error: "Access denied" });
+  }
+  next();
+});
 app.use('/uploads', express.static(path.join(uploadRoot), { maxAge: '1y', immutable: true }));
 app.use(express.static(publicDir, { maxAge: '1y', immutable: true }));
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { fetchGeneralEnquiries, updateGeneralEnquiryStatus, type GeneralEnquiryRow } from '@/lib/enquiries';
-import { Inbox, RefreshCw, Download, Search, User, Phone, BookOpen, MessageSquare, Calendar } from 'lucide-react';
+import { fetchGeneralEnquiries, updateGeneralEnquiryStatus, deleteGeneralEnquiry, type GeneralEnquiryRow } from '@/lib/enquiries';
+import { Inbox, RefreshCw, Download, Search, User, Phone, BookOpen, MessageSquare, Calendar, Trash2, Eye } from 'lucide-react';
 
 const statuses = ['New', 'Contacted', 'Follow Up', 'Converted', 'Closed'];
 
@@ -12,6 +12,8 @@ export default function AdminEnquiries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<GeneralEnquiryRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -51,6 +53,27 @@ export default function AdminEnquiries() {
       await load();
     }
     setSaving(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setError('');
+    try {
+      const result = await deleteGeneralEnquiry(deleteTarget.id);
+      if (!result.success) {
+        setError(result.error || 'Unable to delete enquiry.');
+      } else {
+        setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+        if (selected?.id === deleteTarget.id) setSelected(null);
+        setDeleteTarget(null);
+        await load();
+      }
+    } catch (deleteError: any) {
+      setError(deleteError?.message || String(deleteError));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const exportCsv = () => {
@@ -123,18 +146,19 @@ export default function AdminEnquiries() {
                 <th className="py-3.5 px-6">Enquiry Type</th>
                 <th className="py-3.5 px-6">Current Status</th>
                 <th className="py-3.5 px-6">Submitted Date</th>
+                <th className="py-3.5 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-secondary-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-secondary-500 text-sm">
+                  <td colSpan={7} className="py-12 text-center text-secondary-500 text-sm">
                     Loading enquiries list...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-secondary-500 text-sm">
+                  <td colSpan={7} className="py-12 text-center text-secondary-500 text-sm">
                     {error ? 'Unable to load enquiries.' : 'No enquiry records found.'}
                   </td>
                 </tr>
@@ -142,8 +166,7 @@ export default function AdminEnquiries() {
                 filtered.map((r) => (
                   <tr
                     key={r.id}
-                    className="hover:bg-primary-50/30 transition-colors cursor-pointer"
-                    onClick={() => openRow(r)}
+                    className="hover:bg-primary-50/30 transition-colors"
                   >
                     <td className="py-4 px-6 font-semibold text-secondary-900 flex items-center gap-2">
                       <User size={15} className="text-secondary-400" />
@@ -176,6 +199,24 @@ export default function AdminEnquiries() {
                         <Calendar size={13} className="text-secondary-400" />
                         {r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                       </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openRow(r)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary-200 text-secondary-700 hover:bg-white"
+                          title="View enquiry"
+                        >
+                          <Eye size={14} /> View
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(r)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
+                          title="Delete enquiry"
+                        >
+                          <Trash2 size={14} /> Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -222,6 +263,12 @@ export default function AdminEnquiries() {
                 >
                   {saving ? 'Saving...' : 'Save'}
                 </button>
+                <button
+                  onClick={() => setDeleteTarget(selected)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-1.5 border border-red-200 text-red-700 rounded-xl hover:bg-red-50"
+                >
+                  <Trash2 size={14} /> Delete Enquiry
+                </button>
               </div>
             </div>
 
@@ -264,6 +311,29 @@ export default function AdminEnquiries() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[130] bg-black/60 p-4 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <div className="w-12 h-12 rounded-xl bg-red-50 text-red-700 flex items-center justify-center mb-4">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-secondary-900 mb-2">Delete Enquiry?</h3>
+            <p className="text-sm text-secondary-600 mb-4">Are you sure you want to permanently delete this enquiry?</p>
+            <div className="rounded-xl bg-secondary-50 border p-4 text-sm mb-5">
+              <div><span className="font-semibold">Name:</span> {deleteTarget.name || '-'}</div>
+              <div><span className="font-semibold">Mobile:</span> {deleteTarget.mobile || '-'}</div>
+              <div><span className="font-semibold">Enquiry Type:</span> {deleteTarget.enquiry_type || '-'}</div>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
+              <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="px-4 py-2 border rounded-lg disabled:opacity-50">Cancel</button>
+              <button onClick={confirmDelete} disabled={deleting} className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-50">
+                {deleting ? 'Deleting...' : 'Delete Enquiry'}
+              </button>
+            </div>
           </div>
         </div>
       )}

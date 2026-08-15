@@ -166,6 +166,14 @@ export async function updateGeneralEnquiry(id: string, payload: Record<string, u
   });
 }
 
+export async function deleteGeneralEnquiry(id: string) {
+  return request<boolean>(`/api/general-enquiries/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+export async function deleteEnquiry(id: string) {
+  return request<boolean>(`/api/enquiries/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 // Careers
 export async function listCareerJobs(admin = false) {
   return request<any[]>(`/api/career-jobs${admin ? '?admin=true' : ''}`);

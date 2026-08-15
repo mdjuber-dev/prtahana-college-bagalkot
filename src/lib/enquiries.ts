@@ -1,4 +1,4 @@
-import { createGeneralEnquiry, listGeneralEnquiries, updateGeneralEnquiry } from './neon-api';
+import { createGeneralEnquiry, listGeneralEnquiries, updateGeneralEnquiry, deleteGeneralEnquiry as deleteGeneralEnquiryApi } from './neon-api';
 
 /** Canonical table for home popup + contact general enquiries (NOT admissions). */
 export const GENERAL_ENQUIRIES_TABLE = 'general_enquiries';
@@ -73,6 +73,16 @@ export async function updateGeneralEnquiryStatus(id: string, status: string): Pr
     return { success: true };
   } catch (error) {
     console.error('updateGeneralEnquiryStatus error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function deleteGeneralEnquiry(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await deleteGeneralEnquiryApi(id);
+    return { success: true };
+  } catch (error) {
+    console.error('deleteGeneralEnquiry error:', error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }

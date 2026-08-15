@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download, Eye, RefreshCw, Search, X } from 'lucide-react';
 import {
   CAREER_APPLICATION_STATUSES,
-  createResumeSignedUrl,
   fetchAdminCareerApplications,
   fetchAdminCareerJobs,
   updateCareerApplicationStatus,
@@ -10,6 +9,7 @@ import {
   type CareerApplicationStatus,
   type CareerJob,
 } from '@/lib/careers';
+import { API_URL, getAdminToken } from '@/lib/api';
 
 export default function AdminCareerApplicationsPage() {
   const [applications, setApplications] = useState<CareerApplication[]>([]);
@@ -66,13 +66,36 @@ export default function AdminCareerApplicationsPage() {
   };
 
   const openResume = async (app: CareerApplication, download = false) => {
-    const result = await createResumeSignedUrl(app.resume_path);
-    if (!result.url) {
-      setError(result.error || 'Unable to create secure resume link.');
-      return;
+    setError('');
+    try {
+      const token = getAdminToken();
+      const baseUrl = API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+      const url = `${baseUrl}/api/career-applications/${app.id}/resume${download ? '?download=true' : ''}`;
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      if (download) {
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = app.resume_file_name || 'resume';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } else {
+        window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to open resume.');
     }
-    const url = download ? `${result.url}${result.url.includes('?') ? '&' : '?'}download=${encodeURIComponent(app.resume_file_name)}` : result.url;
-    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const exportCsv = () => {
