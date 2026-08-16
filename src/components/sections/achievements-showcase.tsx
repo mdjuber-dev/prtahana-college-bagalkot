@@ -2,7 +2,7 @@ import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SectionTitle from '@/components/shared/section-title';
 import MarqueeCarousel from '@/components/carousels/marquee-carousel';
-import { achievers, examTabs, examMeta, type ExamType, type Achiever } from '@/lib/achievers-data';
+import { achievers, type Achiever } from '@/lib/achievers-data';
 
 function AchieverCard({ achiever }: { achiever: Achiever }) {
   return (
@@ -38,29 +38,22 @@ export default function AchievementsShowcase() {
   return (
     <section className="py-16 md:py-24 bg-secondary-50 overflow-hidden" aria-labelledby="achievements-title">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle eyebrow="Our Toppers" title="Achievements Showcase" subtitle="Celebrating the success of our students in ALL streams — NEET, KCET, JEE, and Board examinations." />
+        <SectionTitle eyebrow="Our Toppers" title="Achievements Showcase" subtitle="Celebrating the success of our students in board and competitive examinations." />
       </div>
       <div className="mt-12 space-y-6">
-        {examTabs.map((exam: ExamType) => (
-          <div key={exam}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-3">
-              <h3 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
-                <span className="w-1 h-6 rounded-full bg-gradient-primary" />
-                {examMeta[exam].label}
-                {examMeta[exam].kind === 'posters' && examMeta[exam].label !== 'ALL' && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 border border-primary-200">
-                    {/* Posters on Achievements Page */}
-                  </span>
-                )}
-              </h3>
-            </div>
-            <MarqueeCarousel speed={30}>
-              {(achievers[exam] ?? []).map((achiever: Achiever) => (
-                <AchieverCard key={achiever.id} achiever={achiever} />
-              ))}
-            </MarqueeCarousel>
+        <div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-3">
+            <h3 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+              <span className="w-1 h-6 rounded-full bg-gradient-primary" />
+              Our Star Achievers
+            </h3>
           </div>
-        ))}
+          <MarqueeCarousel speed={30}>
+            {(achievers['ALL'] ?? []).map((achiever: Achiever) => (
+              <AchieverCard key={achiever.id} achiever={achiever} />
+            ))}
+          </MarqueeCarousel>
+        </div>
       </div>
       <div className="text-center mt-12">
         <Link to="/achievements" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-primary text-white font-semibold rounded-lg hover:shadow-glow transition-all">

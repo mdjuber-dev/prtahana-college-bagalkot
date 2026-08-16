@@ -151,7 +151,7 @@ function studentEmailHtml(d: EmailPayload): string {
                 <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;">
                   <strong>Phone:</strong> +91 98765 43210<br>
                   <strong>Email:</strong> info@prarthanapusciencecollege.in<br>
-                  <strong>Address:</strong> College Road, Bagalkot, Karnataka 587101<br>
+                  <strong>Address:</strong> 5MMV+2FG, Kaulpet, Bagalkot, Karnataka 587101<br>
                   <strong>Website:</strong> <a href="https://prarthanapusciencecollege.in" style="color:#2563eb;text-decoration:none;">prarthanapusciencecollege.in</a>
                 </p>
               </div>

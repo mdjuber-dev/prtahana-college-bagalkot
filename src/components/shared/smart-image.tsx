@@ -8,7 +8,7 @@ interface SmartImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'onE
   aspectClass?: string;
 }
 
-const defaultFallback = '/images/about/prathanaclg-pht.png';
+const defaultFallback = '/prathanaclg-pht.png';
 
 export default function SmartImage({
   src,

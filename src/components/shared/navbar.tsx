@@ -71,7 +71,7 @@ export default function Navbar() {
                 'text-[10px] md:text-xs font-medium transition-colors duration-300',
                 scrolled || location.pathname !== '/' ? 'text-secondary-500' : 'text-primary-700/70'
               )}>
-                Bagalkote, Karnataka
+                Bagalkot, Karnataka
               </span>
             </div>
           </Link>

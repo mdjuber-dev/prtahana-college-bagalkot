@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import PageHero from '@/components/shared/page-hero';
 import CTASection from '@/components/shared/cta-section';
 import { useCMS } from '@/lib/cms-context';
-import { getTelLink, getMapsLink, getWhatsAppLink } from '@/lib/communication';
+import { getTelLink, getWhatsAppLink } from '@/lib/communication';
 import { submitEnquiryToGoogleSheets } from '@/lib/google-script-config';
 import { submitGeneralEnquiryToNeon } from '@/lib/submissions';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
@@ -73,7 +73,7 @@ export default function ContactPage() {
         siteConfig.address.line3,
         `${siteConfig.address.city}, ${siteConfig.address.state} ${siteConfig.address.pincode}`,
       ].filter(Boolean) as string[],
-      link: getMapsLink(),
+      link: 'https://www.google.com/maps/place/Prarthana+P+U+Science+College+Bagalkot/@16.1825746,75.6936906,839m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3bc778f3349a462f:0x27050572c74ff80a!8m2!3d16.1825746!4d75.6936906!16s%2Fg%2F11dxnsktfw?entry=ttu&g_ep=EgoyMDI2MDgxMi4wIKXMDSoASAFQAw%3D%3D',
       linkLabel: 'Get directions',
     },
     {
@@ -388,8 +388,8 @@ export default function ContactPage() {
                       className={inputClass}
                     >
                       <option value="">Select Course (Optional)</option>
-                      <option value="PCMB">PCMB — Physics, Chemistry, Maths & Biology (Medical & Engineering)</option>
-                      <option value="PCMC">PCMC — Physics, Chemistry, Maths & Computer Science (Engineering & Tech)</option>
+                      <option value="PCMB">PCMB — Physics, Chemistry, Mathematics & Biology (Medical & Engineering)</option>
+                      <option value="PCMC">PCMC — Physics, Chemistry, Mathematics & Computer Science (Engineering & Tech)</option>
                     </select>
                   </div>
 
@@ -478,7 +478,7 @@ export default function ContactPage() {
               </p>
               <div className="rounded-3xl overflow-hidden shadow-soft h-[400px] md:h-[500px] border border-primary-100/70">
                 <iframe
-                  src={siteConfig.mapsEmbed}
+                  src="https://www.google.com/maps/embed?q=16.1825746,75.6936906"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

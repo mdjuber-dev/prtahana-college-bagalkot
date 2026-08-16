@@ -144,9 +144,9 @@ function PamphletCard({
               <a
                 href={getMediaUrl(imgSrc)}
                 target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-bold text-sm text-secondary-800 bg-secondary-100 hover:bg-secondary-200 transition-colors border border-secondary-200"
-            >
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-bold text-sm text-secondary-800 bg-secondary-100 hover:bg-secondary-200 transition-colors border border-secondary-200"
+              >
               <Download size={15} />
               Open / Save
             </a>

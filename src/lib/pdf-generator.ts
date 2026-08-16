@@ -904,7 +904,7 @@ function drawReceptionHeaderBanner(pdf: jsPDF, y: number, data: PDFData, logoPng
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   setText(pdf, C.primaryLight);
-  pdf.text('Bagalkot, Karnataka - 587101  |  Integrated Science & Competitive Coaching', M + 20, y + 13);
+  pdf.text('5MMV+2FG, Kaulpet, Bagalkot - 587101  |  Integrated Science & Competitive Coaching', M + 20, y + 13);
 
   // Internal Record Badge
   setFill(pdf, C.purpleDark);

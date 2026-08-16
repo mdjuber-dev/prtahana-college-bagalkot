@@ -10,7 +10,7 @@ import { getMediaUrl } from '@/lib/media-url';
 export default function AboutPreview() {
   const cms = useCMS();
   const about = cms.about;
-  const imageSrc = about?.image || aboutImages[0]?.src || '/images/about/prathanaclg-pht.png';
+  const imageSrc = about?.image || aboutImages[0]?.src || '/prathanaclg-pht.png';
 
   if (about?.is_active === false) return null;
 

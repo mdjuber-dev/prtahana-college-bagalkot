@@ -21,7 +21,7 @@ const courses: Course[] = [
     icon: Dna,
     code: 'PCMB',
     tagline: 'Medical & Engineering Excellence',
-    title: 'Physics · Chemistry · Maths · Biology',
+    title: 'Physics · Chemistry · Mathematics · Biology',
     description:
       'The gold standard science stream for students targeting top medical and engineering entrance exams. Builds the strongest scientific foundation for dual career pathways.',
     keySubjects: ['Physics', 'Chemistry', 'Mathematics', 'Biology'],
@@ -32,7 +32,7 @@ const courses: Course[] = [
     icon: Cpu,
     code: 'PCMC',
     tagline: 'Engineering & Technology Innovators',
-    title: 'Physics · Chemistry · Maths · Computer Science',
+    title: 'Physics · Chemistry · Mathematics · Computer Science',
     description:
       'Future-focused stream for aspiring engineers, software developers and technology leaders. Combines rigorous science with practical computing skills.',
     keySubjects: ['Physics', 'Chemistry', 'Mathematics', 'Computer Science'],
@@ -56,7 +56,7 @@ export default function CoursesPreview() {
     <section className="py-16 md:py-24 bg-primary-50 relative overflow-hidden" aria-labelledby="courses-preview-title">
       <div
         className="absolute inset-0 opacity-[0.032] pointer-events-none bg-center bg-cover"
-        style={{ backgroundImage: "url('/campus-3.jpg')" }}
+        style={{ backgroundImage: "url('/campus-life-3.jpg')" }}
         aria-hidden="true"
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

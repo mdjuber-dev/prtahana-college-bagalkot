@@ -8,7 +8,7 @@ import { useCMS } from '@/lib/cms-context';
 export default function CampusLife() {
   const cms = useCMS();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const previewImages = (cms.galleryImages || []).slice(0, 12).map((g) => ({ src: g.src, alt: g.alt, title: g.title, width: g.width, height: g.height }));
+  const previewImages = (cms.galleryImages || []).filter((g) => g.src && g.src.trim() !== '').slice(0, 12).map((g) => ({ src: g.src, alt: g.alt, title: g.title, width: g.width, height: g.height }));
 
   return (
     <section className="py-16 md:py-24" aria-labelledby="campus-life-title">

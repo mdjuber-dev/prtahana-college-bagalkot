@@ -34,7 +34,7 @@ export default function AboutPage() {
   const about = cms.about;
   const visionMission = cms.visionMission;
   const config = cms.siteConfig;
-  const storyImage = about?.image || aboutImages[0]?.src || '/images/about/prathanaclg-pht.png';
+  const storyImage = about?.image || aboutImages[0]?.src || '/prathanaclg-pht.png';
 
   if (about?.is_active === false) {
     return (

@@ -38,8 +38,8 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4 text-base">Courses</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/courses" className="hover:text-white transition-colors">PCMB (Physics, Chemistry, Maths, Biology)</Link></li>
-              <li><Link to="/courses" className="hover:text-white transition-colors">PCMC (Physics, Chemistry, Maths, Computer Science)</Link></li>
+              <li><Link to="/courses" className="hover:text-white transition-colors">PCMB (Physics, Chemistry, Mathematics, Biology)</Link></li>
+              <li><Link to="/courses" className="hover:text-white transition-colors">PCMC (Physics, Chemistry, Mathematics, Computer Science)</Link></li>
               <li><Link to="/achievements" className="hover:text-white transition-colors">NEET / KCET / JEE Coaching</Link></li>
             </ul>
           </div>

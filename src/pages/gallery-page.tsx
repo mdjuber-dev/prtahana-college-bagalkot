@@ -19,7 +19,7 @@ export default function GalleryPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const galleryImages = cms.galleryImages?.length
-    ? cms.galleryImages.map((g) => ({ id: g.id || String(Math.random()), src: g.src, alt: g.alt, title: g.title, category: g.category, width: g.width, height: g.height }))
+    ? cms.galleryImages.filter((g) => g.src && g.src.trim() !== '').map((g) => ({ id: g.id || String(Math.random()), src: g.src, alt: g.alt, title: g.title, category: g.category, width: g.width, height: g.height }))
     : staticGalleryImages;
 
   const galleryVideos = cms.galleryVideos?.length

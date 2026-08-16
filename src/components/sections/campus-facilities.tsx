@@ -50,7 +50,7 @@ export default function CampusFacilities() {
     >
       <div
         className="absolute inset-0 opacity-[0.028] pointer-events-none bg-center bg-cover"
-        style={{ backgroundImage: "url('/classroom-2.jpg')" }}
+        style={{ backgroundImage: "url('/images/classrooms/classroom-2.jpg')" }}
         aria-hidden="true"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-white via-white/60 to-white pointer-events-none" aria-hidden="true" />

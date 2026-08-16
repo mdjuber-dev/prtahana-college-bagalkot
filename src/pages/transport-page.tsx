@@ -26,14 +26,14 @@ const features = [
   },
   {
     icon: MapPin,
-    title: 'Serves Bagalkote & nearby areas',
-    description: 'Routes cover key points across Bagalkote town and surrounding suburban locations.',
+    title: 'Serves Bagalkot & nearby areas',
+    description: 'Routes cover key points across Bagalkot town and surrounding suburban locations.',
   },
 ];
 
 const highlights = [
   'Transport facility available for students',
-  'Routes cover Bagalkote town and surrounding suburbs',
+  'Routes cover Bagalkot town and surrounding suburbs',
   'Separate hostel facility also available for boys and girls if daily commute is not preferred',
   'Vehicles operated by licensed drivers with safety measures',
 ];

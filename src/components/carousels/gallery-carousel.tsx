@@ -10,8 +10,23 @@ interface GalleryCarouselProps {
 }
 
 export default function GalleryCarousel({ images, onImageClick, interval = 3000 }: GalleryCarouselProps) {
-  const { index, next, prev, goTo, handleMouseEnter, handleMouseLeave, handleTouchStart, handleTouchEnd } =
-    useAutoCarousel({ totalItems: images.length, interval, pauseOnHover: true });
+  const VISIBLE = 3;
+  const {
+    index,
+    displayIndex,
+    animating,
+    next,
+    prev,
+    goTo,
+    handleMouseEnter,
+    handleMouseLeave,
+    handleTouchStart,
+    handleTouchEnd,
+  } = useAutoCarousel({ totalItems: images.length, interval, pauseOnHover: true, infinite: true, visibleSlides: VISIBLE });
+
+  const clonesEnd = images.slice(-VISIBLE);
+  const clonesStart = images.slice(0, VISIBLE);
+  const trackItems = [...clonesStart, ...images, ...clonesEnd];
 
   return (
     <div
@@ -26,17 +41,20 @@ export default function GalleryCarousel({ images, onImageClick, interval = 3000 
     >
       <motion.div
         className="flex gap-4"
-        animate={{ x: `calc(-${index} * (100% / 3 + 1rem * 100 / 3))` }}
-        transition={{ type: 'tween', duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+        animate={{ x: `calc(-${displayIndex} * (100% / 3 + 1rem * 100 / 3))` }}
+        transition={{ type: 'tween', duration: animating ? 0.6 : 0, ease: [0.4, 0, 0.2, 1] }}
         style={{ willChange: 'transform' }}
       >
-        {images.map((image, i) => (
+        {trackItems.map((image, i) => (
           <div
             key={i}
             className="flex-shrink-0 cursor-pointer"
             style={{ width: 'calc(100% / 3 - 1rem)' }}
-            onClick={() => onImageClick?.(i)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onImageClick?.(i); } }}
+            onClick={() => {
+              const realIndex = i < VISIBLE ? images.length + i : i >= images.length + VISIBLE ? i - images.length - VISIBLE : i - VISIBLE;
+              onImageClick?.(realIndex);
+            }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const realIndex = i < VISIBLE ? images.length + i : i >= images.length + VISIBLE ? i - images.length - VISIBLE : i - VISIBLE; onImageClick?.(realIndex); } }}
             tabIndex={0}
             role="button"
             aria-label={`View image: ${image.title}`}

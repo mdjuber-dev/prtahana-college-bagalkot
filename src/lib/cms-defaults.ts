@@ -213,7 +213,7 @@ export function buildDefaultSiteCmsPayload(): Record<string, unknown> {
       subtitle: 'Discover the story, mission, and values that make Prarthana PU Science College a leader in science education.',
       description: 'Prarthana PU Science College, Bagalkot has been a beacon of quality science education since 2015.',
       story: 'Founded in 2015, Prarthana PU Science College has grown into one of Bagalkot\'s most trusted institutions for PU science education.',
-      image: '/images/about/prathanaclg-pht.png',
+      image: '/prathanaclg-pht.png',
       is_active: true,
     },
     visionMission: {

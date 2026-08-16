@@ -132,13 +132,13 @@ const KNOWLEDGE_BASE: KnowledgeEntry[] = [
     topic: 'location',
     keywords: ['location', 'where', 'address', 'place', 'situated', 'map', 'direction', 'directions', 'area', 'near', 'landmark'],
     answer:
-      "📍 **Our Location:**\n\n**Prarthana PU Science College**\nDaddenaver Hospital Campus,\nNear Rural Police Station,\nBagalkote, Karnataka 587101\n\n🗺️ **Landmarks:**\n• Right next to / within Daddenaver Hospital Campus\n• Close to Rural Police Station, Bagalkot\n• Easily accessible by road, auto and college buses\n\n📱 Click 'View on Map' in the Contact page or call us for directions.",
+      "📍 **Our Location:**\n\n**Prarthana PU Science College**\n5MMV+2FG, Kaulpet,\nBagalkot, Karnataka 587101\n\n🗺️ **Landmarks:**\n• Located at Kaulpet, Bagalkot\n• Easily accessible by road, auto and college buses\n\n📱 Click 'View on Map' in the Contact page or call us for directions.",
   },
   {
     topic: 'contact',
     keywords: ['contact', 'phone', 'number', 'call', 'mobile', 'email', 'whatsapp', 'reach', 'how to contact', 'office', 'helpline', 'admission office'],
     answer:
-      "📞 **Contact the Admission Office:**\n\n**Phone / Call:**\n• 94811 38788\n• 79752 17020\n\n**Email:**\n(Use the enquiry form on our Contact page for fastest response)\n\n**Address:**\nPrarthana PU Science College,\nDaddenaver Hospital Campus,\nNear Rural Police Station,\nBagalkote, Karnataka 587101\n\n💬 **WhatsApp:** Available as an option (use the floating button on the website)\n\n⏳ **Office Hours:** Monday – Saturday, roughly 9:00 AM to 5:30 PM\n\nFor the fastest response to admission questions, please submit the Enquiry form on our Contact page. Our team typically responds within 24 working hours.",
+      "📞 **Contact the Admission Office:**\n\n**Phone / Call:**\n• 94811 38788\n• 79752 17020\n\n**Email:**\n(Use the enquiry form on our Contact page for fastest response)\n\n**Address:**\nPrarthana PU Science College,\n5MMV+2FG, Kaulpet,\nBagalkot, Karnataka 587101\n\n💬 **WhatsApp:** Available as an option (use the floating button on the website)\n\n⏳ **Office Hours:** Monday – Saturday, roughly 9:00 AM to 5:30 PM\n\nFor the fastest response to admission questions, please submit the Enquiry form on our Contact page. Our team typically responds within 24 working hours.",
   },
   {
     topic: 'apply_now',

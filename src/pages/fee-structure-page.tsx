@@ -211,7 +211,7 @@ export default function FeeStructurePage() {
                 <ul className="space-y-2 text-sm text-secondary-600 mb-4">
                   <li className="flex items-start gap-2"><ShieldCheck className="text-primary-500 shrink-0 mt-0.5" size={14} /> GPS-tracked buses</li>
                   <li className="flex items-start gap-2"><Check className="text-primary-500 shrink-0 mt-0.5" size={14} /> Experienced drivers and conductors</li>
-                  <li className="flex items-start gap-2"><Check className="text-primary-500 shrink-0 mt-0.5" size={14} /> Bagalkote and nearby routes</li>
+                  <li className="flex items-start gap-2"><Check className="text-primary-500 shrink-0 mt-0.5" size={14} /> Bagalkot and nearby routes</li>
                 </ul>
                 <div className="pt-3 border-t border-secondary-100 flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-secondary-500">Facility Charges</span>
