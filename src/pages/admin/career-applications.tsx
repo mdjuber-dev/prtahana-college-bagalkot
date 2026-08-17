@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Eye, RefreshCw, Search, X } from 'lucide-react';
+import { Download, Eye, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import {
   CAREER_APPLICATION_STATUSES,
+  deleteCareerApplication,
   fetchAdminCareerApplications,
   fetchAdminCareerJobs,
   updateCareerApplicationStatus,
@@ -61,6 +62,22 @@ export default function AdminCareerApplicationsPage() {
       setNotice('Application status saved successfully.');
     } else {
       setError(result.error || 'Unable to update application status.');
+    }
+    setSaving(false);
+  };
+
+  const deleteApp = async (app: CareerApplication) => {
+    if (!window.confirm(`Permanently delete application from "${app.full_name}"? This action cannot be undone.`)) return;
+    setSaving(true);
+    setError('');
+    setNotice('');
+    const result = await deleteCareerApplication(app.id);
+    if (result.success) {
+      setApplications((prev) => prev.filter((row) => row.id !== app.id));
+      if (selected?.id === app.id) setSelected(null);
+      setNotice('Application deleted successfully.');
+    } else {
+      setError(result.error || 'Unable to delete application.');
     }
     setSaving(false);
   };
@@ -185,12 +202,13 @@ export default function AdminCareerApplicationsPage() {
                   <td className="p-3">{app.years_experience}</td>
                   <td className="p-3"><StatusPill status={app.status} /></td>
                   <td className="p-3 whitespace-nowrap">{new Date(app.created_at).toLocaleString('en-IN')}</td>
-                  <td className="p-3">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => setSelected(app)} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border"><Eye size={14} /> View</button>
-                      <button onClick={() => openResume(app)} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border"><Download size={14} /> Resume</button>
-                    </div>
-                  </td>
+                   <td className="p-3">
+                     <div className="flex justify-end gap-2">
+                       <button onClick={() => setSelected(app)} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border"><Eye size={14} /> View</button>
+                       <button onClick={() => openResume(app)} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border"><Download size={14} /> Resume</button>
+                       <button onClick={() => deleteApp(app)} className="p-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50" title="Delete"><Trash2 size={14} /></button>
+                     </div>
+                   </td>
                 </tr>
               ))
             )}

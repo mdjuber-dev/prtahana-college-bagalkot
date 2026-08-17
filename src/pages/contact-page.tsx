@@ -73,7 +73,7 @@ export default function ContactPage() {
         siteConfig.address.line3,
         `${siteConfig.address.city}, ${siteConfig.address.state} ${siteConfig.address.pincode}`,
       ].filter(Boolean) as string[],
-      link: 'https://www.google.com/maps/place/Prarthana+P+U+Science+College+Bagalkot/@16.1825746,75.6936906,839m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3bc778f3349a462f:0x27050572c74ff80a!8m2!3d16.1825746!4d75.6936906!16s%2Fg%2F11dxnsktfw?entry=ttu&g_ep=EgoyMDI2MDgxMi4wIKXMDSoASAFQAw%3D%3D',
+      link: 'https://www.google.com/maps/place/Prarthana+P+U+Science+College+Bagalkot/@16.1824562,75.6938318,398m/data=!3m1!1e3!4m6!3m5!1s0x3bc778f3349a462f:0x27050572c74ff80a!8m2!3d16.1825746!4d75.6936906!16s%2Fg%2F11dxnsktfw?entry=ttu&g_ep=EgoyMDI2MDgxMi4wIKXMDSoASAFQAw%3D%3D',
       linkLabel: 'Get directions',
     },
     {

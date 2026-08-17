@@ -207,6 +207,10 @@ export async function updateCareerApplication(id: string, payload: Record<string
   return request<any>(`/api/career-applications/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(payload) });
 }
 
+export async function deleteCareerApplication(id: string) {
+  return request<boolean>(`/api/career-applications/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 export async function getCareerResumeUrl(path: string) {
   const data = await request<{ url: string }>(`/api/career-resumes?path=${encodeURIComponent(path)}`);
   return data.url;

@@ -1,6 +1,7 @@
 import {
   createCareerApplication,
   createCareerJob,
+  deleteCareerApplication as deleteCareerApplicationApi,
   deleteCareerJob,
   getCareerJob,
   getCareerResumeUrl,
@@ -297,6 +298,16 @@ export async function updateCareerApplicationStatus(id: string, status: CareerAp
     return { success: true };
   } catch (error) {
     console.error('updateCareerApplicationStatus error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function deleteCareerApplication(id: string) {
+  try {
+    await deleteCareerApplicationApi(id);
+    return { success: true };
+  } catch (error) {
+    console.error('deleteCareerApplication error:', error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }

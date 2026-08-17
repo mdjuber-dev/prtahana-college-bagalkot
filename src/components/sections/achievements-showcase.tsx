@@ -24,7 +24,6 @@ function AchieverCard({ achiever }: { achiever: Achiever }) {
       </div>
       <div className="flex items-center justify-between text-sm">
         <div><p className="text-xs text-secondary-500">Score</p><p className="font-bold text-primary-700">{achiever.score}</p></div>
-        <div className="text-right"><p className="text-xs text-secondary-500">Rank</p><p className="font-bold text-accent-600">{achiever.rank}</p></div>
         <div className="text-right"><p className="text-xs text-secondary-500">Year</p><p className="font-bold text-secondary-700">{achiever.year}</p></div>
       </div>
       <div className="mt-2 flex gap-0.5" aria-label="5 out of 5 stars">

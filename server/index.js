@@ -818,9 +818,9 @@ function sanitizeCareerApplicationPayload(body) {
     payload.application_ref = `APP-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
   }
   payload.job_id = sanitizeUuid(payload.job_id);
-  payload.full_name = String(payload.full_name || "").trim() || "Applicant";
-  payload.email = String(payload.email || "").trim() || "notprovided@example.com";
-  payload.mobile = String(payload.mobile || "").trim() || "Not Provided";
+  payload.full_name = String(payload.full_name || "").trim() || "";
+  payload.email = String(payload.email || "").trim() || "";
+  payload.mobile = String(payload.mobile || "").trim() || "";
   payload.qualification = String(payload.qualification || "").trim() || "Not Specified";
   payload.subject_department = String(payload.subject_department || "").trim() || "General";
   payload.years_experience = String(payload.years_experience || "").trim() || "0 years";
@@ -853,6 +853,15 @@ app.patch("/api/career-applications/:id", requireAdmin, async (req, res) => {
     ok(res, result.rows[0] || null);
   } catch (error) {
     handleError(res, "career application update error", error);
+  }
+});
+
+app.delete("/api/career-applications/:id", requireAdmin, async (req, res) => {
+  try {
+    await queryWithRetry("DELETE FROM public.career_applications WHERE id = $1", [req.params.id]);
+    ok(res, true);
+  } catch (error) {
+    handleError(res, "career application delete error", error);
   }
 });
 

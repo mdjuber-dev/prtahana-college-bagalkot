@@ -226,9 +226,6 @@ export default function AchievementsPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-secondary-900/70 via-transparent to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <span className="inline-block px-2.5 py-1 rounded-full bg-accent-500 text-white text-xs font-bold mb-1">
-                          {achiever.rank}
-                        </span>
                         <p className="text-white font-semibold text-sm">{achiever.score}</p>
                       </div>
                     </div>
