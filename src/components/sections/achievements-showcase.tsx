@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import SectionTitle from '@/components/shared/section-title';
 import MarqueeCarousel from '@/components/carousels/marquee-carousel';
 import { achievers, type Achiever } from '@/lib/achievers-data';
+import { getMediaUrl } from '@/lib/media-url';
 
 function AchieverCard({ achiever }: { achiever: Achiever }) {
   return (
     <div className="w-72 shrink-0 mx-2 bg-white rounded-2xl p-5 card-shadow hover:shadow-premium transition-shadow duration-300">
       <div className="flex items-center gap-3 mb-3">
         <img
-          src={achiever.photo}
+          src={getMediaUrl(achiever.photo)}
           alt={`${achiever.name} - ${achiever.exam} topper`}
           className="w-12 h-12 rounded-full object-cover shrink-0"
           loading="lazy"

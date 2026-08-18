@@ -3,6 +3,7 @@ import { Star, Quote } from 'lucide-react';
 import SectionTitle from '@/components/shared/section-title';
 import { staggerContainer, fadeInUp } from '@/lib/motion';
 import { achievementImages } from '@/data/achievement-images';
+import { getMediaUrl } from '@/lib/media-url';
 
 interface Testimonial {
   name: string;
@@ -87,7 +88,7 @@ export default function Testimonials() {
               {/* Author */}
               <div className="mt-6 flex items-center gap-3 pt-4 border-t border-secondary-100">
                 <img
-                  src={testimonial.photo}
+                  src={getMediaUrl(testimonial.photo)}
                   alt={`${testimonial.name} - ${testimonial.role}`}
                   className="w-12 h-12 rounded-full object-cover shrink-0"
                   loading="lazy"

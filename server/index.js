@@ -22,6 +22,8 @@ const dbQueryTimeoutMs = Number(process.env.DB_QUERY_TIMEOUT_MS || 12000);
 const configuredOrigins = [
   process.env.FRONTEND_URL,
   process.env.PRODUCTION_FRONTEND_URL,
+  "https://prarthanapucollegebagalkot.in",
+  "https://www.prarthanapucollegebagalkot.in",
   "https://prarthanaclgbgk.prarthanapusciencecollege-web.workers.dev",
 ].filter(Boolean);
 

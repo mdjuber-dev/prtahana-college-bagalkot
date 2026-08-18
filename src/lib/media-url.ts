@@ -3,7 +3,7 @@ import { API_URL } from './api';
 export function getMediaUrl(url: string | undefined | null): string {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
-    return url;
+    return url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, API_URL);
   }
   if (url.startsWith('/uploads/')) {
     return `${API_URL}${url}`;

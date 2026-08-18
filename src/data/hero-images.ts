@@ -23,7 +23,7 @@ export interface HeroImage {
 export const heroImages: HeroImage[] = [
   {
     id: 1,
-    image: '/images/hero/prathanaclg-pht.png',
+    image: '/prathanaclg-pht.png',
     src: '/prathanaclg-pht.png',
     title: 'State-of-the-Art Science Campus',
     subtitle: 'Prarthana PU Science College, Bagalkot',
