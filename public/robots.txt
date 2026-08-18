@@ -2,8 +2,9 @@ User-agent: *
 Allow: /
 
 Disallow: /admin/
+Disallow: /admin/login
 Disallow: /api/
-Disallow: /private/
 Disallow: /uploads/career-applications/
 
-Sitemap: https://prarthanapusciencecollege.in/sitemap.xml
+Sitemap: https://prarthanapucollegebagalkot.in/sitemap.xml
+Host: https://prarthanapucollegebagalkot.in

@@ -17,6 +17,24 @@ const organizationLd = {
     postalCode: siteConfig.address.pincode,
     addressCountry: 'IN',
   },
+  sameAs: [
+    siteConfig.social.facebook,
+    siteConfig.social.instagram,
+    siteConfig.social.youtube,
+  ],
+  logo: `${siteConfig.url}${siteConfig.logo}`,
+};
+
+const websiteLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: siteConfig.name,
+  url: siteConfig.url,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${siteConfig.url}/search?q={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
 };
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -31,7 +49,7 @@ function upsertLink(rel: string, href: string) {
   el.setAttribute('href', href);
 }
 
-function setJsonLd(data: Record<string, unknown>) {
+function setJsonLd(data: unknown) {
   let el = document.head.querySelector<HTMLScriptElement>('script[type="application/ld+json"]');
   if (!el) {
     el = document.createElement('script');
@@ -46,21 +64,41 @@ export default function SEOHead() {
   const path = location.pathname;
   const meta = pageMeta[path] || pageMeta['/'];
   const fullUrl = `${siteConfig.url}${meta.canonical}`;
+  const isAdmin = path.startsWith('/admin');
 
   useEffect(() => {
     document.title = meta.title;
     upsertMeta('name', 'title', meta.title);
     upsertMeta('name', 'description', meta.description);
-    upsertMeta('name', 'keywords', meta.keywords);
+    if (meta.keywords) {
+      upsertMeta('name', 'keywords', meta.keywords);
+    }
     upsertLink('canonical', fullUrl);
+
+    if (meta.noindex) {
+      upsertMeta('name', 'robots', 'noindex, nofollow');
+    } else {
+      upsertMeta('name', 'robots', 'index, follow');
+    }
+
+    upsertMeta('property', 'og:type', isAdmin ? 'website' : 'website');
     upsertMeta('property', 'og:title', meta.title);
     upsertMeta('property', 'og:description', meta.description);
     upsertMeta('property', 'og:url', fullUrl);
     upsertMeta('property', 'og:site_name', siteConfig.name);
+    if (meta.ogImage) {
+      upsertMeta('property', 'og:image', `${siteConfig.url}${meta.ogImage}`);
+    }
+    upsertMeta('name', 'twitter:card', 'summary_large_image');
     upsertMeta('name', 'twitter:title', meta.title);
     upsertMeta('name', 'twitter:description', meta.description);
-    setJsonLd(organizationLd);
-  }, [meta, fullUrl, path]);
+    if (meta.twitterImage) {
+      upsertMeta('name', 'twitter:image', `${siteConfig.url}${meta.twitterImage}`);
+    }
+
+    const jsonLd = isAdmin ? organizationLd : [organizationLd, websiteLd];
+    setJsonLd(jsonLd);
+  }, [meta, fullUrl, path, isAdmin]);
 
   return null;
 }

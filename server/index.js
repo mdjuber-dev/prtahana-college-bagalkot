@@ -1048,6 +1048,47 @@ app.get("/", (req, res) => {
   res.json({ success: true, message: "Prarthana College API is running" });
 });
 
+const SITE_URL = (process.env.SITE_URL || "https://prarthanapucollegebagalkot.in").replace(/\/+$/, "");
+
+app.get("/sitemap.xml", async (req, res) => {
+  try {
+    const staticUrls = [
+      "/",
+      "/about",
+      "/courses",
+      "/achievements",
+      "/gallery",
+      "/fee-structure",
+      "/transport",
+      "/admission",
+      "/contact",
+      "/careers",
+    ];
+
+    let careerUrls: string[] = [];
+    try {
+      const result = await queryWithRetry(
+        "SELECT slug FROM public.career_jobs WHERE status = 'active' AND slug IS NOT NULL AND slug <> '' ORDER BY created_at DESC"
+      );
+      careerUrls = result.rows.map((row) => `/careers/${row.slug}`);
+    } catch (e) {
+      console.error("Failed to load career jobs for sitemap:", e);
+    }
+
+    const urls = [...staticUrls, ...careerUrls];
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((u) => `  <url><loc>${SITE_URL}${u}</loc><changefreq>${u === "/" || u === "/admission" ? "weekly" : "monthly"}</changefreq><priority>${u === "/" ? "1.0" : u === "/admission" ? "0.9" : "0.8"}</priority></url>`).join("\n")}
+</urlset>`;
+
+    res.set("Content-Type", "application/xml");
+    res.send(xml);
+  } catch (error) {
+    console.error("sitemap error:", error);
+    res.status(500).send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"></urlset>");
+  }
+});
+
 // Serve static frontend files in production (Docker / single-origin deployment)
 const distDir = path.join(rootDir, "dist");
 const publicDir = path.join(rootDir, "public");
