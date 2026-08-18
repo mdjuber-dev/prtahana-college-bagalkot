@@ -141,6 +141,15 @@ export const pageMeta: Record<string, PageMeta> = {
     ogImage: '/prathanaclg-pht.png',
     twitterImage: '/prathanaclg-pht.png',
   },
+  '*': {
+    title: 'Page Not Found | Prarthana PU Science College Bagalkot',
+    description: 'The page you are looking for does not exist.',
+    keywords: '',
+    canonical: '/',
+    noindex: true,
+    ogImage: '/prathanaclg-pht.png',
+    twitterImage: '/prathanaclg-pht.png',
+  },
   '/admin/login': {
     title: 'Admin Login | Prarthana PU Science College',
     description: 'Admin login portal.',
