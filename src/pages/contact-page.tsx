@@ -477,16 +477,16 @@ export default function ContactPage() {
                 Visit our campus at {siteConfig.address.full}.
               </p>
               <div className="rounded-3xl overflow-hidden shadow-soft h-[400px] md:h-[500px] border border-primary-100/70">
-                <iframe
-                  src="https://www.google.com/maps/embed?q=16.1825746,75.6936906"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title={`Map showing ${siteConfig.name} location`}
-                  aria-label={`Map of ${siteConfig.name}`}
-                />
+                 <iframe
+                   src="https://www.google.com/maps/embed?q=Prarthana+PU+Science+College+Bagalkot&z=15&center=16.1825746,75.6936906"
+                   width="100%"
+                   height="100%"
+                   style={{ border: 0 }}
+                   loading="lazy"
+                   referrerPolicy="no-referrer-when-downgrade"
+                   title={`Map showing ${siteConfig.name} location`}
+                   aria-label={`Map of ${siteConfig.name}`}
+                 />
               </div>
             </motion.div>
           </div>

@@ -16,7 +16,7 @@ export const siteConfig = {
     pincode: '587101',
     full: 'Prarthana PU Science College, 5MMV+2FG, Kaulpet, Bagalkot, Karnataka 587101',
   },
-  mapsEmbed: 'https://www.google.com/maps/embed?q=Prarthana+PU+Science+College+Bagalkot,+5MMV+2FG,+Kaulpet,+Bagalkot,+Karnataka+587101',
+  mapsEmbed: 'https://www.google.com/maps/embed?q=Prarthana+PU+Science+College+Bagalkot&z=15&center=16.1825746,75.6936906',
   social: {
     facebook: 'https://facebook.com/prarthanapusciencecollege',
     instagram: 'https://instagram.com/prarthanapusciencecollege',
