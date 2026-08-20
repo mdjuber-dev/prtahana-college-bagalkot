@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { Eye, RefreshCw, Search, Trash2, X, GraduationCap, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { deleteAdmission, listAdmissions, updateAdmission } from '@/lib/api';
 import { getMediaUrl } from '@/lib/media-url';
+import AdminPageHeader from '@/components/admin/ui/AdminPageHeader';
+import StatusBadge from '@/components/admin/ui/StatusBadge';
 
 type AdmissionRow = Record<string, unknown> & {
   application_id?: string | null;
@@ -151,13 +153,6 @@ function displayIdentifier(row: AdmissionRow | null): string {
   return String(row?.application_id || row?.reference_code || '-');
 }
 
-function statusClass(status: string): string {
-  if (status === 'Approved') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  if (status === 'Rejected') return 'bg-red-50 text-red-700 border-red-200';
-  if (status === 'Pending') return 'bg-amber-50 text-amber-700 border-amber-200';
-  return 'bg-blue-50 text-blue-700 border-blue-200';
-}
-
 export default function AdminAdmissions() {
   const [rows, setRows] = useState<AdmissionRow[]>([]);
   const [q, setQ] = useState('');
@@ -298,103 +293,147 @@ export default function AdminAdmissions() {
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-sm font-semibold text-primary-700">Separate admissions records</p>
-        <h2 className="text-2xl font-bold">Admissions</h2>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Admissions Management"
+        subtitle="Manage student application forms, view applicant profiles, track review status, and export record data."
+        icon={GraduationCap}
+        badge="Admissions Pipeline"
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={load}
+              disabled={loading}
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all backdrop-blur-md border border-white/10 flex items-center gap-2"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+            <button
+              onClick={exportCsv}
+              disabled={!filtered.length}
+              className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <Download size={14} />
+              <span>Export CSV</span>
+            </button>
+          </div>
+        }
+      />
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-semibold">
-          {error}
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {notice && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold">
-          {notice}
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 size={16} className="shrink-0" />
+          <span>{notice}</span>
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" />
+      {/* Search & Filter Controls */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name, mobile, email, application ID, reference, course or status"
-            className="w-full pl-9 pr-3 py-2 border rounded-lg"
+            placeholder="Search name, mobile, email, app ID, reference, course..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder-secondary-400"
           />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border rounded-lg bg-white">
-          <option value="All">All Statuses</option>
-          {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <button onClick={load} disabled={loading} className="inline-flex items-center justify-center gap-2 px-3 py-2 border rounded-lg disabled:opacity-50">
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> {loading ? 'Loading...' : 'Refresh'}
-        </button>
-        <button onClick={exportCsv} disabled={!filtered.length} className="px-3 py-2 border rounded-lg disabled:opacity-50">Export</button>
+
+        <div className="flex items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-secondary-700 focus:outline-none focus:border-primary-500"
+          >
+            <option value="All">All Statuses</option>
+            {statuses.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+
+          <span className="text-xs font-bold text-secondary-500 hidden sm:inline">
+            Showing <strong className="text-primary-700">{filtered.length}</strong> items
+          </span>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-secondary-50">
-            <tr className="border-b">
-              <th className="p-3">Application / Reference</th>
-              <th className="p-3">Student</th>
-              <th className="p-3">Course</th>
-              <th className="p-3">Mobile</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Submitted</th>
-              <th className="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={8} className="p-8 text-center text-secondary-500">Loading admissions...</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} className="p-8 text-center text-secondary-500">{error ? 'Unable to load admissions.' : 'No admissions found.'}</td></tr>
-            ) : (
-              filtered.map((r, index) => (
-                <tr key={rowKey(r, index)} className="border-b hover:bg-primary-50">
-                  <td className="p-3">
-                    <div className="font-semibold text-secondary-900">{r.application_id || '-'}</div>
-                    <div className="text-xs text-secondary-500">{r.reference_code || '-'}</div>
-                  </td>
-                  <td className="p-3 font-medium">{r.student_name || '-'}</td>
-                  <td className="p-3">{r.course_interested || '-'}</td>
-                  <td className="p-3">{r.mobile_number || '-'}</td>
-                  <td className="p-3">{r.email || '-'}</td>
-                  <td className="p-3">
-                    <span className={`inline-flex px-2.5 py-1 rounded-full border text-xs font-bold ${statusClass(String(r.status || 'Submitted'))}`}>
-                      {r.status || 'Submitted'}
-                    </span>
-                  </td>
-                  <td className="p-3 whitespace-nowrap">{formatValue(r.created_at || r.submitted_at)}</td>
-                  <td className="p-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => openRow(r)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary-200 text-secondary-700 hover:bg-white"
-                      >
-                        <Eye size={14} /> View
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(r)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
-                        title="Delete Admission"
-                      >
-                        <Trash2 size={14} /> Delete
-                      </button>
-                    </div>
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-extrabold uppercase tracking-wider text-secondary-500">
+                <th className="py-4 px-6">Application / Ref</th>
+                <th className="py-4 px-4">Student Name</th>
+                <th className="py-4 px-4">Course</th>
+                <th className="py-4 px-4">Mobile</th>
+                <th className="py-4 px-4">Email</th>
+                <th className="py-4 px-4">Status</th>
+                <th className="py-4 px-4">Submitted</th>
+                <th className="py-4 px-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-16 text-center text-secondary-400 font-semibold">
+                    Loading admissions database...
                   </td>
                 </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-16 text-center text-secondary-500 font-semibold">
+                    {error ? 'Unable to load admissions.' : 'No admissions found matching criteria.'}
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((r, index) => (
+                  <tr key={rowKey(r, index)} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="font-bold text-secondary-900">{r.application_id || '-'}</div>
+                      <div className="text-[11px] text-secondary-500 font-mono">{r.reference_code || '-'}</div>
+                    </td>
+                    <td className="py-4 px-4 font-bold text-secondary-900">{r.student_name || '-'}</td>
+                    <td className="py-4 px-4 font-semibold text-secondary-700">{r.course_interested || '-'}</td>
+                    <td className="py-4 px-4 font-medium text-secondary-600">{r.mobile_number || '-'}</td>
+                    <td className="py-4 px-4 font-medium text-secondary-600">{r.email || '-'}</td>
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <StatusBadge status={String(r.status || 'Submitted')} size="sm" />
+                    </td>
+                    <td className="py-4 px-4 whitespace-nowrap text-secondary-500 font-medium">{formatValue(r.created_at || r.submitted_at)}</td>
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => openRow(r)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 text-secondary-700 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 transition-colors font-bold text-xs inline-flex items-center gap-1"
+                        >
+                          <Eye size={14} /> View
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(r)}
+                          className="p-1.5 rounded-xl text-secondary-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Delete Admission"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+    </div>
 
       {selected && (
         <div className="fixed inset-0 z-[120] bg-black/50 p-4 flex items-start justify-center overflow-y-auto">
