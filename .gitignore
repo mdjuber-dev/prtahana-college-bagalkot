@@ -8,6 +8,9 @@ supabase/.temp/
 .env.*
 !.env.example
 
+tsconfig.app.tsbuildinfo
+vite.config.ts.timestamp-*
+
 prarthana-clg-bgk-BACKUP/
 
 pratharna-clg-bgk-BACKUP/

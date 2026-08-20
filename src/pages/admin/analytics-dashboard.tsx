@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createDashboardConfig, deleteDashboardConfig, listDashboardConfigs, updateDashboardConfig } from '@/lib/neon-api';
 import { BarChart3, Plus, Trash2, Edit2, ExternalLink, ShieldAlert, CheckCircle2, Eye, Layout, AlertCircle } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/ui/AdminPageHeader';
 
 interface DashboardConfig {
   id: string;
@@ -173,16 +174,12 @@ export default function AnalyticsDashboardAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-5 rounded-2xl border shadow-soft">
-        <div>
-          <p className="text-xs font-bold text-primary-700 uppercase tracking-widest">Business Intelligence & Analytics</p>
-          <h2 className="text-2xl font-extrabold text-secondary-900">Power BI & Analytics Hub</h2>
-        </div>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary-50 text-primary-800 text-xs font-bold border border-primary-200">
-          <BarChart3 size={16} /> Power BI & Tableau Ready
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Dashboard Configuration & Analytics"
+        subtitle="Manage Power BI, Tableau, and external BI dashboard embeds, set default analytics views, and configure reporting panels."
+        icon={BarChart3}
+        badge="Analytics Portal"
+      />
 
       {error && (
         <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold flex items-center gap-2">

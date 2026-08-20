@@ -2,13 +2,17 @@ import { API_URL } from './api';
 
 export function getMediaUrl(url: string | undefined | null): string {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
-    return url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, API_URL);
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return trimmed.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, API_URL);
   }
-  if (url.startsWith('/uploads/')) {
-    return `${API_URL}${url}`;
+  if (trimmed.startsWith('/uploads/')) {
+    return `${API_URL}${trimmed}`;
   }
-  return url;
+  if (trimmed.startsWith('uploads/')) {
+    return `${API_URL}/${trimmed}`;
+  }
+  return trimmed;
 }
 
 export function getMediaUrlWithVersion(url: string | undefined | null, updatedAt?: string | number): string {

@@ -8,6 +8,7 @@ import { useCMS } from '@/lib/cms-context';
 import { getTelLink, getWhatsAppLink } from '@/lib/communication';
 import { submitEnquiryToGoogleSheets } from '@/lib/google-script-config';
 import { submitGeneralEnquiryToNeon } from '@/lib/submissions';
+import { getMediaUrl } from '@/lib/media-url';
 import { fadeInUp, staggerContainer } from '@/lib/motion';
 
 interface ContactFormData {
@@ -476,17 +477,54 @@ export default function ContactPage() {
               <p className="text-secondary-600 mb-6">
                 Visit our campus at {siteConfig.address.full}.
               </p>
-              <div className="rounded-3xl overflow-hidden shadow-soft h-[400px] md:h-[500px] border border-primary-100/70">
-                 <iframe
-                   src="https://www.google.com/maps/embed?q=Prarthana+PU+Science+College+Bagalkot&z=15&center=16.1825746,75.6936906"
-                   width="100%"
-                   height="100%"
-                   style={{ border: 0 }}
-                   loading="lazy"
-                   referrerPolicy="no-referrer-when-downgrade"
-                   title={`Map showing ${siteConfig.name} location`}
-                   aria-label={`Map of ${siteConfig.name}`}
-                 />
+              <div className="rounded-3xl overflow-hidden shadow-soft h-[400px] md:h-[500px] border border-primary-100/70 relative">
+                <iframe
+                  src={siteConfig.mapsEmbed}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={`Map showing ${siteConfig.name} location`}
+                  aria-label={`Map of ${siteConfig.name}`}
+                  allowFullScreen
+                />
+                <div className="absolute bottom-4 left-4 right-4 sm:right-auto max-w-sm bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-slate-100 space-y-2.5 text-xs text-secondary-800 z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white p-1 border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
+                      <img
+                        src={getMediaUrl(siteConfig.logo)}
+                        alt={siteConfig.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-secondary-900 text-sm leading-tight">{siteConfig.name}</h4>
+                      <p className="text-secondary-500 font-bold text-[11px]">Bagalkot, Karnataka</p>
+                    </div>
+                  </div>
+                  <p className="text-secondary-600 font-medium text-[11px] leading-relaxed">
+                    {siteConfig.address.full}
+                  </p>
+                  <div className="pt-1 flex items-center gap-2">
+                    <a
+                      href="https://www.google.com/maps?q=16.1790607,75.6906218+(Prarthana+PU+Science+College+Bagalkot)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-primary-900 hover:bg-primary-950 text-white font-bold rounded-xl text-[11px] transition-all inline-flex items-center gap-1 shadow-sm"
+                    >
+                      Open in Google Maps ↗
+                    </a>
+                    <a
+                      href="https://www.google.com/maps/dir/?api=1&destination=16.1790607,75.6906218"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-gradient-accent text-white font-bold rounded-xl text-[11px] hover:shadow-md transition-all inline-flex items-center gap-1 shadow-sm"
+                    >
+                      Get Directions ↗
+                    </a>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>

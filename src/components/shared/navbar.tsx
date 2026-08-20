@@ -12,10 +12,13 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const config = cms.siteConfig;
-  const navItemsWithCareers = cms.navItems.some((item) => item.path === '/careers')
+  const navItemsWithAnnouncements = cms.navItems.some((item) => item.path === '/announcements')
     ? cms.navItems
-    : [...cms.navItems, { label: 'Careers', path: '/careers' }];
-  const navOrder = ['/', '/about', '/courses', '/achievements', '/gallery', '/fee-structure', '/transport', '/contact', '/careers'];
+    : [...cms.navItems, { label: 'Announcements', path: '/announcements' }];
+  const navItemsWithCareers = navItemsWithAnnouncements.some((item) => item.path === '/careers')
+    ? navItemsWithAnnouncements
+    : [...navItemsWithAnnouncements, { label: 'Careers', path: '/careers' }];
+  const navOrder = ['/', '/about', '/courses', '/achievements', '/announcements', '/gallery', '/fee-structure', '/transport', '/contact', '/careers'];
   const items = navItemsWithCareers
     .filter((item) => item.path !== '/admission')
     .sort((a, b) => {
@@ -92,6 +95,9 @@ export default function Navbar() {
                     aria-current={location.pathname === item.path ? 'page' : undefined}
                   >
                     {item.label}
+                    {item.path === '/announcements' && (
+                      <span className="inline-block w-1.5 h-1.5 ml-1.5 rounded-full bg-accent-500 align-middle" />
+                    )}
                     {location.pathname === item.path && (
                       <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent-500" />
                     )}

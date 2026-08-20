@@ -223,7 +223,7 @@ async function runHealthQuery() {
   try {
     return await withTimeout(healthPool.query("SELECT NOW()"), dbQueryTimeoutMs, "Health database query");
   } finally {
-    await healthPool.end().catch(() => {});
+    await healthPool.end().catch(() => { });
   }
 }
 
@@ -248,6 +248,105 @@ async function initMediaUploadsTable() {
   }
 }
 initMediaUploadsTable();
+
+async function initAnnouncementsTable() {
+  try {
+    await queryWithRetry(`
+      CREATE TABLE IF NOT EXISTS public.announcements (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title TEXT NOT NULL,
+        short_description TEXT,
+        full_description TEXT,
+        category TEXT NOT NULL DEFAULT 'General Announcement',
+        event_date DATE,
+        start_date DATE,
+        end_date DATE,
+        event_time TEXT,
+        venue TEXT,
+        image_url TEXT,
+        attachment_url TEXT,
+        cta_text TEXT,
+        cta_url TEXT,
+        status TEXT NOT NULL DEFAULT 'published',
+        is_featured BOOLEAN DEFAULT false,
+        priority INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      );
+    `);
+    console.log("Announcements table ready in PostgreSQL.");
+
+    const countRes = await queryWithRetry("SELECT COUNT(*)::int AS count FROM public.announcements");
+    if (countRes.rows[0]?.count === 0) {
+      await queryWithRetry(`
+        INSERT INTO public.announcements (title, short_description, full_description, category, event_date, venue, status, is_featured, priority, cta_text, cta_url, image_url)
+        VALUES 
+        (
+          'Admissions Open for Academic Year 2026-27 (PCMB & PCMC)',
+          'Prarthana PU Science College, Bagalkot invites applications for I & II PUC Science streams. Secure your seat today for expert coaching and top state results.',
+          'Applications are invited for admission into I Year and II Year Pre-University Science courses (PCMB & PCMC). We offer specialized integrated coaching for NEET, JEE Main, KCET, and Board examinations with state-of-the-art laboratory facilities and dedicated faculty.',
+          'Admission',
+          CURRENT_DATE + INTERVAL '10 days',
+          'College Campus, Bagalkot',
+          'published',
+          true,
+          10,
+          'Apply for Admission',
+          '/admission',
+          '/frontpagepamplet.jpeg'
+        ),
+        (
+          'Annual Science Exhibition & Innovation Day 2026',
+          'Join us at the Prarthana Science Campus for interactive project displays, robotics demonstrations, and guest lectures by renowned academicians.',
+          'The Annual Science & Technology Exhibition showcase will feature over 100 innovative working models created by PCMB and PCMC students. Parents, alumni, and prospective students are cordially invited.',
+          'Event',
+          CURRENT_DATE + INTERVAL '15 days',
+          'Prarthana College Main Auditorium, Bagalkot',
+          'published',
+          true,
+          5,
+          'View Event Details',
+          '/announcements',
+          '/campus-life-1.jpg'
+        ),
+        (
+          'Pre-Board Examination Schedule Announced',
+          'Timetable for upcoming PUC preparatory and pre-board mock examinations has been released for I & II PU Science students.',
+          'Preparatory exams begin from the 1st of next month. Students are advised to collect their detailed hall tickets and subject-wise syllabus checklists from their respective batch coordinators.',
+          'Exam',
+          CURRENT_DATE + INTERVAL '20 days',
+          'Examination Blocks A & B',
+          'published',
+          false,
+          2,
+          'Contact Admin Office',
+          '/contact',
+          '/library.jpg'
+        );
+      `);
+      console.log("Seeded initial announcements data.");
+    } else {
+      await queryWithRetry(`
+        UPDATE public.announcements
+        SET image_url = CASE 
+          WHEN title LIKE 'Admissions Open%' THEN '/frontpagepamplet.jpeg'
+          WHEN title LIKE 'Annual Science Exhibition%' THEN '/campus-life-1.jpg'
+          WHEN title LIKE 'Pre-Board Examination%' THEN '/library.jpg'
+          ELSE image_url
+        END
+        WHERE (image_url IS NULL OR image_url = '') AND (
+          title LIKE 'Admissions Open%' OR 
+          title LIKE 'Annual Science Exhibition%' OR 
+          title LIKE 'Pre-Board Examination%'
+        )
+      `);
+    }
+  } catch (err) {
+    console.error("Failed to initialize announcements table:", err);
+  }
+}
+initAnnouncementsTable();
+
 
 async function saveMediaFile(file, category) {
   if (!file?.data || !file?.name) throw new Error("File data is required");
@@ -390,7 +489,7 @@ app.delete("/api/media/:id", requireAdmin, async (req, res) => {
     if (result.rows[0]) {
       const row = result.rows[0];
       const diskPath = path.join(uploadRoot, row.category, path.basename(row.url));
-      await fsPromises.unlink(diskPath).catch(() => {});
+      await fsPromises.unlink(diskPath).catch(() => { });
     }
     ok(res, true);
   } catch (error) {
@@ -424,6 +523,7 @@ app.put("/api/media/:id", requireAdmin, async (req, res) => {
 
 const galleryColumns = [
   "src", "alt", "title", "category", "type", "poster", "width", "height", "is_active", "sort_order",
+  "created_at", "updated_at",
 ];
 
 app.get("/api/gallery", async (req, res) => {
@@ -591,7 +691,11 @@ const admissionColumns = [
   "state", "pin_code", "previous_school", "previous_school_address", "sslc_marks", "sslc_board", "passing_year",
   "course_interested", "medium_of_instruction", "preferred_batch", "religion", "caste", "blood_group", "aadhaar_number",
   "transport_required", "hostel_required", "parent_occupation", "parent_email", "emergency_contact", "annual_family_income",
-  "admission_source", "message", "photo_url", "submitted_at", "created_at", "status",
+  "admission_source", "message", "photo_url", "enquiry_type", "submitted_at", "created_at", "updated_at", "status",
+  "verified_by", "remarks", "follow_up_date", "reception_notes", "counsellor_name", "counsellor_assigned_date",
+  "pdf_path", "bank_name", "bank_account_number", "bank_ifsc", "bank_branch", "fee_payment_status", "fee_amount_paid",
+  "fee_due_date", "doc_marks_card_verified", "doc_tc_verified", "doc_aadhaar_verified", "doc_photos_verified",
+  "doc_income_certificate_verified", "doc_caste_certificate_verified",
 ];
 
 app.get("/api/admissions", requireAdmin, async (req, res) => {
@@ -618,7 +722,7 @@ app.post("/api/admissions", async (req, res) => {
 app.patch("/api/admissions/:column/:value", requireAdmin, async (req, res) => {
   try {
     if (!["application_id", "reference_code", "id"].includes(req.params.column)) return fail(res, 400, "Invalid admission identifier.");
-    const payload = { ...req.body };
+    const payload = { ...req.body, updated_at: new Date().toISOString() };
     if ("date_of_birth" in payload) payload.date_of_birth = sanitizeDateOnly(payload.date_of_birth);
     if ("submitted_at" in payload) payload.submitted_at = sanitizeDate(payload.submitted_at);
     if ("created_at" in payload) payload.created_at = sanitizeDate(payload.created_at);
@@ -827,7 +931,7 @@ function sanitizeCareerApplicationPayload(body) {
   payload.subject_department = String(payload.subject_department || "").trim() || "General";
   payload.years_experience = String(payload.years_experience || "").trim() || "0 years";
   payload.cover_letter = String(payload.cover_letter || "").trim() || "No cover letter provided.";
-  payload.resume_path = String(payload.resume_path || "").trim() || null;
+  payload.resume_path = String(payload.resume_path || "").trim() || "";
   payload.resume_file_name = String(payload.resume_file_name || "").trim() || "resume";
   payload.resume_file_size = Number(payload.resume_file_size) || 0;
   payload.status = payload.status || "new";
@@ -988,6 +1092,122 @@ app.get("/api/admin-users", requireAdmin, async (req, res) => {
   }
 });
 
+// Announcements API
+const announcementColumns = [
+  "title", "short_description", "full_description", "category", "event_date", "start_date", "end_date",
+  "event_time", "venue", "image_url", "attachment_url", "cta_text", "cta_url", "status", "is_featured",
+  "priority", "created_at", "updated_at",
+];
+
+function sanitizeAnnouncementPayload(body) {
+  const payload = { ...body };
+  payload.title = String(payload.title || "").trim();
+  payload.short_description = payload.short_description ? String(payload.short_description).trim() : null;
+  payload.full_description = payload.full_description ? String(payload.full_description).trim() : null;
+  payload.category = String(payload.category || "General Announcement").trim();
+  payload.event_date = sanitizeDateOnly(payload.event_date);
+  payload.start_date = sanitizeDateOnly(payload.start_date);
+  payload.end_date = sanitizeDateOnly(payload.end_date);
+  payload.event_time = payload.event_time ? String(payload.event_time).trim() : null;
+  payload.venue = payload.venue ? String(payload.venue).trim() : null;
+  payload.image_url = payload.image_url ? String(payload.image_url).trim() : null;
+  payload.attachment_url = payload.attachment_url ? String(payload.attachment_url).trim() : null;
+  payload.cta_text = payload.cta_text ? String(payload.cta_text).trim() : null;
+  payload.cta_url = payload.cta_url ? String(payload.cta_url).trim() : null;
+  const statusStr = String(payload.status || "published").toLowerCase();
+  payload.status = ["draft", "published", "archived"].includes(statusStr) ? statusStr : "published";
+  payload.is_featured = Boolean(payload.is_featured);
+  payload.priority = Number(payload.priority) || 0;
+  return payload;
+}
+
+app.get("/api/announcements", async (req, res) => {
+  try {
+    const admin = req.query.admin === "true";
+    if (admin && !verifyToken(getBearer(req))) return fail(res, 401, "Admin session required");
+    
+    // Auto-patch null image_urls for initial default entries if present
+    try {
+      await queryWithRetry(`
+        UPDATE public.announcements
+        SET image_url = CASE 
+          WHEN title LIKE 'Admissions Open%' THEN '/frontpagepamplet.jpeg'
+          WHEN title LIKE 'Annual Science Exhibition%' THEN '/campus-life-1.jpg'
+          WHEN title LIKE 'Pre-Board Examination%' THEN '/library.jpg'
+          ELSE image_url
+        END
+        WHERE (image_url IS NULL OR image_url = '') AND (
+          title LIKE 'Admissions Open%' OR 
+          title LIKE 'Annual Science Exhibition%' OR 
+          title LIKE 'Pre-Board Examination%'
+        )
+      `);
+    } catch (e) {
+      // Non-critical auto-patch
+    }
+
+    let where = "";
+    if (!admin) {
+      where = "WHERE status = 'published'";
+    }
+    const result = await queryWithRetry(
+      `SELECT * FROM public.announcements ${where} ORDER BY priority DESC, is_featured DESC, COALESCE(event_date, created_at) DESC`
+    );
+    ok(res, result.rows);
+  } catch (error) {
+    handleError(res, "announcements list error", error);
+  }
+});
+
+app.get("/api/announcements/:id", async (req, res) => {
+  try {
+    const id = sanitizeUuid(req.params.id) || req.params.id;
+    const result = await queryWithRetry("SELECT * FROM public.announcements WHERE id = $1 LIMIT 1", [id]);
+    const announcement = result.rows[0];
+    if (!announcement) return fail(res, 404, "Announcement not found");
+    if (announcement.status !== "published" && !verifyToken(getBearer(req))) {
+      return fail(res, 403, "Announcement not published");
+    }
+    ok(res, announcement);
+  } catch (error) {
+    handleError(res, "announcement get error", error);
+  }
+});
+
+app.post("/api/announcements", requireAdmin, async (req, res) => {
+  try {
+    const payload = sanitizeAnnouncementPayload(req.body);
+    if (!payload.title) return fail(res, 400, "Title is required");
+    payload.created_at = sanitizeDate(payload.created_at) || new Date().toISOString();
+    payload.updated_at = new Date().toISOString();
+    const result = await insertRow("announcements", payload, announcementColumns);
+    ok(res, result.rows[0]);
+  } catch (error) {
+    handleError(res, "announcement insert error", error);
+  }
+});
+
+app.patch("/api/announcements/:id", requireAdmin, async (req, res) => {
+  try {
+    const payload = sanitizeAnnouncementPayload(req.body);
+    payload.updated_at = new Date().toISOString();
+    if ("created_at" in payload) payload.created_at = sanitizeDate(payload.created_at);
+    const result = await updateBy("announcements", { column: "id", value: req.params.id }, payload, announcementColumns);
+    ok(res, result.rows[0] || null);
+  } catch (error) {
+    handleError(res, "announcement update error", error);
+  }
+});
+
+app.delete("/api/announcements/:id", requireAdmin, async (req, res) => {
+  try {
+    await queryWithRetry("DELETE FROM public.announcements WHERE id = $1", [req.params.id]);
+    ok(res, true);
+  } catch (error) {
+    handleError(res, "announcement delete error", error);
+  }
+});
+
 app.get("/api/chatbot-knowledge", async (req, res) => {
   try {
     if (!(await tableExists("chatbot_knowledge"))) return ok(res, []);
@@ -1063,9 +1283,10 @@ app.get("/sitemap.xml", async (req, res) => {
       "/admission",
       "/contact",
       "/careers",
+      "/announcements",
     ];
 
-    let careerUrls: string[] = [];
+    let careerUrls = [];
     try {
       const result = await queryWithRetry(
         "SELECT slug FROM public.career_jobs WHERE status = 'active' AND slug IS NOT NULL AND slug <> '' ORDER BY created_at DESC"
@@ -1075,7 +1296,18 @@ app.get("/sitemap.xml", async (req, res) => {
       console.error("Failed to load career jobs for sitemap:", e);
     }
 
-    const urls = [...staticUrls, ...careerUrls];
+    let announcementUrls = [];
+    try {
+      const result = await queryWithRetry(
+        "SELECT id FROM public.announcements WHERE status = 'published' ORDER BY created_at DESC"
+      );
+      announcementUrls = result.rows.map((row) => `/announcements/${row.id}`);
+    } catch (e) {
+      console.error("Failed to load announcements for sitemap:", e);
+    }
+
+    const urls = [...staticUrls, ...careerUrls, ...announcementUrls];
+
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE_URL}${u}</loc><changefreq>${u === "/" || u === "/admission" ? "weekly" : "monthly"}</changefreq><priority>${u === "/" ? "1.0" : u === "/admission" ? "0.9" : "0.8"}</priority></url>`).join("\n")}

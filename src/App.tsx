@@ -10,6 +10,7 @@ import OfflinePage from '@/pages/offline-page';
 import FloatingActions from '@/components/communication/floating-actions';
 import MobileBottomNav from '@/components/communication/mobile-bottom-nav';
 import AdmissionPopup from '@/components/popup/admission-popup';
+import AnnouncementPopup from '@/components/popup/announcement-popup';
 import CollegeChatbot from '@/components/chatbot/college-chatbot';
 import { SkeletonAdmissionForm, SkeletonFeeTable, SkeletonHero, SkeletonSection } from '@/components/shared/skeletons';
 
@@ -25,6 +26,8 @@ const AdmissionSuccessPage = lazy(() => import('@/pages/admission-success-page')
 const ContactPage = lazy(() => import('@/pages/contact-page'));
 const CareersPage = lazy(() => import('@/pages/careers-page'));
 const CareerJobPage = lazy(() => import('@/pages/career-job-page'));
+const AnnouncementsPage = lazy(() => import('@/pages/announcements-page'));
+const AnnouncementDetailPage = lazy(() => import('@/pages/announcement-detail-page'));
 const NotFoundPage = lazy(() => import('@/pages/not-found-page'));
 const AdminLoginPage = lazy(() => import('@/pages/admin/login-page'));
 const AdminAnalyticsPage = lazy(() => import('@/pages/admin/analytics-dashboard'));
@@ -33,6 +36,7 @@ const AdminLayout = lazy(() => import('@/components/admin/AdminLayout'));
 const AdminRoute = lazy(() => import('@/components/admin/AdminRoute'));
 const AdminAdmissionsPage = lazy(() => import('@/pages/admin/admissions'));
 const AdminEnquiriesPage = lazy(() => import('@/pages/admin/enquiries'));
+const AdminAnnouncementsPage = lazy(() => import('@/pages/admin/announcements'));
 const AdminSiteConfigPage = lazy(() => import('@/pages/admin/cms/site-config'));
 const AdminSettingsPage = lazy(() => import('@/pages/admin/settings'));
 const AdminCareersPage = lazy(() => import('@/pages/admin/careers'));
@@ -98,12 +102,15 @@ function AppShell() {
             <Route path="/contact" element={<Suspense fallback={<PageSkeleton page="section" />}><ContactPage /></Suspense>} />
             <Route path="/careers" element={<Suspense fallback={<PageSkeleton page="section" />}><CareersPage /></Suspense>} />
             <Route path="/careers/:slug" element={<Suspense fallback={<PageSkeleton page="section" />}><CareerJobPage /></Suspense>} />
+            <Route path="/announcements" element={<Suspense fallback={<PageSkeleton page="section" />}><AnnouncementsPage /></Suspense>} />
+            <Route path="/announcements/:id" element={<Suspense fallback={<PageSkeleton page="section" />}><AnnouncementDetailPage /></Suspense>} />
             <Route path="/admin/login" element={<Suspense fallback={<PageSkeleton page="section" />}><AdminLoginPage /></Suspense>} />
 
             <Route element={<Suspense><AdminRoute /></Suspense>}>
               <Route path="/admin" element={<Suspense fallback={<div>Loading admin...</div>}><AdminLayout /></Suspense>}>
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<Suspense fallback={<div>Loading...</div>}><AdminDashboardPage /></Suspense>} />
+                <Route path="announcements" element={<Suspense fallback={<div>Loading...</div>}><AdminAnnouncementsPage /></Suspense>} />
                 <Route path="analytics" element={<Suspense fallback={<div>Loading...</div>}><AdminAnalyticsPage /></Suspense>} />
                 <Route path="admissions" element={<Suspense fallback={<div>Loading...</div>}><AdminAdmissionsPage /></Suspense>} />
                 <Route path="enquiries" element={<Suspense fallback={<div>Loading...</div>}><AdminEnquiriesPage /></Suspense>} />
@@ -125,6 +132,7 @@ function AppShell() {
       {!isAdmin && <CollegeChatbot />}
       {!isAdmin && <MobileBottomNav />}
       {!isAdmin && <AdmissionPopup />}
+      {!isAdmin && <AnnouncementPopup />}
     </>
   );
 }

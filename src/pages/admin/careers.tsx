@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Edit, Eye, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { Edit, Eye, Plus, RefreshCw, Trash2, X, Briefcase, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/ui/AdminPageHeader';
+import StatusBadge from '@/components/admin/ui/StatusBadge';
 import {
   deleteCareerJobIfSafe,
   fetchAdminCareerApplications,
@@ -114,80 +116,162 @@ export default function AdminCareersPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-primary-700">Careers CMS</p>
-          <h2 className="text-2xl font-bold">Careers</h2>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Career Opportunities"
+        subtitle="Manage faculty & administrative job openings, update recruitment status, and review applicant counts."
+        icon={Briefcase}
+        badge="Recruitment & HR"
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              to="/admin/careers/applications"
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all backdrop-blur-md border border-white/10 flex items-center gap-2"
+            >
+              <FileText size={14} />
+              <span>Applications ({applicationCount})</span>
+            </Link>
+            <button
+              onClick={load}
+              disabled={loading}
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all backdrop-blur-md border border-white/10 flex items-center gap-2"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+            <button
+              onClick={() => setEditing(emptyJob)}
+              className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+            >
+              <Plus size={14} />
+              <span>Add Job Opening</span>
+            </button>
+          </div>
+        }
+      />
+
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{error}</span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to="/admin/careers/applications" className="px-3 py-2 rounded-lg border bg-white font-semibold text-sm">View Applications</Link>
-          <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border bg-white disabled:opacity-50">
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
-          </button>
-          <button onClick={() => setEditing(emptyJob)} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-700 text-white font-semibold">
-            <Plus size={16} /> Add Job
-          </button>
+      )}
+
+      {notice && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 size={16} className="shrink-0" />
+          <span>{notice}</span>
+        </div>
+      )}
+
+      {/* Stats Summary Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-secondary-400">Total Jobs</span>
+          <p className="text-xl font-black text-secondary-900 mt-1">{stats.total}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600">Active</span>
+          <p className="text-xl font-black text-emerald-700 mt-1">{stats.active}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-secondary-400">Closed</span>
+          <p className="text-xl font-black text-secondary-700 mt-1">{stats.closed}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-primary-600">Applications</span>
+          <p className="text-xl font-black text-primary-700 mt-1">{applicationCount}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">New Candidates</span>
+          <p className="text-xl font-black text-amber-700 mt-1">{newApplicationCount}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600">Shortlisted</span>
+          <p className="text-xl font-black text-purple-700 mt-1">{shortlistedCount}</p>
         </div>
       </div>
 
-      {error && <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-semibold">{error}</div>}
-      {notice && <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold">{notice}</div>}
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-3">
-        <Stat label="Total Jobs" value={stats.total} />
-        <Stat label="Active Jobs" value={stats.active} />
-        <Stat label="Closed Jobs" value={stats.closed} />
-        <Stat label="Applications" value={applicationCount} />
-        <Stat label="New" value={newApplicationCount} />
-        <Stat label="Shortlisted" value={shortlistedCount} />
-      </div>
-
-      <div className="bg-white rounded-xl border shadow-sm overflow-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-secondary-50">
-            <tr className="border-b">
-              <th className="p-3">Job</th>
-              <th className="p-3">Department</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Deadline</th>
-              <th className="p-3">Status</th>
-              <th className="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="p-8 text-center text-secondary-500">Loading jobs...</td></tr>
-            ) : jobs.length === 0 ? (
-              <tr><td colSpan={6} className="p-8 text-center text-secondary-500">No career jobs found.</td></tr>
-            ) : (
-              jobs.map((job) => (
-                <tr key={job.id} className="border-b hover:bg-primary-50">
-                  <td className="p-3">
-                    <div className="font-bold text-secondary-900">{job.title}</div>
-                    <div className="text-xs text-secondary-500">/{job.slug}</div>
-                  </td>
-                  <td className="p-3">{job.department || '-'}</td>
-                  <td className="p-3">{job.employment_type || '-'}</td>
-                  <td className="p-3">{job.application_deadline || 'Open until filled'}</td>
-                  <td className="p-3"><StatusPill status={job.status} /></td>
-                  <td className="p-3">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => setPreview(job)} className="p-2 rounded-lg border hover:bg-white" title="Preview"><Eye size={15} /></button>
-                      <button onClick={() => setEditing(job)} className="p-2 rounded-lg border hover:bg-white" title="Edit"><Edit size={15} /></button>
-                      {JOB_STATUSES.map((status) => (
-                        <button key={status} onClick={() => changeStatus(job, status)} disabled={job.status === status} className="px-2 py-1 rounded-lg border text-xs font-semibold disabled:opacity-40">
-                          {status}
-                        </button>
-                      ))}
-                      <button onClick={() => deleteJob(job)} className="p-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50" title="Delete"><Trash2 size={15} /></button>
-                    </div>
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 text-secondary-500 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200/80">
+                <th className="py-4 px-6">Job Position</th>
+                <th className="py-4 px-4">Department</th>
+                <th className="py-4 px-4">Type</th>
+                <th className="py-4 px-4">Application Deadline</th>
+                <th className="py-4 px-4">Status</th>
+                <th className="py-4 px-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center text-secondary-400 font-semibold">
+                    Loading job vacancies...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : jobs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center text-secondary-500 font-semibold">
+                    No career job postings recorded yet.
+                  </td>
+                </tr>
+              ) : (
+                jobs.map((job) => (
+                  <tr key={job.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="font-bold text-secondary-900 text-sm">{job.title}</div>
+                      <div className="text-[11px] text-secondary-400 font-mono">/{job.slug}</div>
+                    </td>
+                    <td className="py-4 px-4 font-semibold text-secondary-700">{job.department || '-'}</td>
+                    <td className="py-4 px-4 font-medium text-secondary-600">{job.employment_type || '-'}</td>
+                    <td className="py-4 px-4 font-medium text-secondary-500">{job.application_deadline || 'Open until filled'}</td>
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <StatusBadge status={job.status} size="sm" />
+                    </td>
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setPreview(job)}
+                          className="p-1.5 rounded-xl border border-slate-200 text-secondary-600 hover:bg-slate-50 transition-colors"
+                          title="Preview Job"
+                        >
+                          <Eye size={15} />
+                        </button>
+                        <button
+                          onClick={() => setEditing(job)}
+                          className="p-1.5 rounded-xl border border-slate-200 text-secondary-600 hover:bg-slate-50 transition-colors"
+                          title="Edit Job"
+                        >
+                          <Edit size={15} />
+                        </button>
+                        {JOB_STATUSES.map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => changeStatus(job, st)}
+                            disabled={job.status === st}
+                            className="px-2.5 py-1 rounded-xl border border-slate-200 text-[11px] font-bold capitalize text-secondary-700 hover:bg-slate-100 disabled:opacity-40 transition-colors"
+                          >
+                            {st}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => deleteJob(job)}
+                          className="p-1.5 rounded-xl text-secondary-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Delete Job"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {editing && (
@@ -268,23 +352,6 @@ export default function AdminCareersPage() {
 
 const inputClass = 'w-full px-3 py-2 rounded-lg border border-secondary-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none text-sm';
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-white rounded-xl border p-4 shadow-sm">
-      <p className="text-xs font-bold text-secondary-500 uppercase">{label}</p>
-      <p className="text-3xl font-black text-secondary-900">{value}</p>
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const cls = status === 'active'
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    : status === 'closed'
-      ? 'bg-red-50 text-red-700 border-red-200'
-      : 'bg-secondary-50 text-secondary-700 border-secondary-200';
-  return <span className={`inline-flex px-2.5 py-1 rounded-full border text-xs font-bold ${cls}`}>{status}</span>;
-}
 
 function Text({ label, value, onChange, textarea, type = 'text' }: { label: string; value: string; onChange: (value: string) => void; textarea?: boolean; type?: string }) {
   return (

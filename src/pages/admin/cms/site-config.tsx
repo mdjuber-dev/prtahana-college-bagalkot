@@ -13,6 +13,7 @@ import {
   Section, TextField, ToggleField, ImageField, ReorderButtons,
   DeleteButton, AddButton, setPath, reorderList, LeaderEditor,
 } from './cms-ui';
+import AdminPageHeader from '@/components/admin/ui/AdminPageHeader';
 import type {
   CmsHeroSlide, CmsAchievementCard, CmsAchievementPoster,
   CmsFeeRow, CmsFacultyMember, CmsNavItem,
@@ -245,18 +246,25 @@ export default function AdminSiteConfig() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border shadow-soft">
-        <div>
-          <p className="text-xs font-bold text-primary-700 uppercase tracking-widest">Website Content Control</p>
-          <h2 className="text-2xl font-extrabold text-secondary-900">Website CMS Portal</h2>
-        </div>
-        <button onClick={handleSaveAll} disabled={saving || uploading} className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-primary text-white font-bold text-sm rounded-xl hover:shadow-glow transition-all disabled:opacity-50">
-          <Save size={18} />{saving ? 'Saving...' : 'Save All CMS Changes'}
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Website Content Management"
+        subtitle="Control and customize public website copy, hero banners, courses, fee structures, faculty, gallery, and contact information."
+        icon={Building2}
+        badge="Site CMS"
+        actions={
+          <button
+            onClick={handleSaveAll}
+            disabled={saving || uploading}
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
+          >
+            <Save size={16} />
+            <span>{saving ? 'Saving Changes...' : 'Save All CMS Changes'}</span>
+          </button>
+        }
+      />
 
       {message && (
-        <div className={`p-4 rounded-2xl border text-sm font-semibold ${message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+        <div className={`p-4 rounded-2xl border text-xs font-semibold ${message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
           {message.text}
         </div>
       )}

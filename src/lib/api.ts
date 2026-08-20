@@ -285,6 +285,28 @@ export async function deleteGalleryItem(id: string) {
   return request<boolean>(`/api/gallery/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
+// Announcements Management
+export async function listAnnouncements(admin = false) {
+  return request<any[]>(`/api/announcements${admin ? '?admin=true' : ''}`);
+}
+
+export async function getAnnouncement(id: string) {
+  return request<any | null>(`/api/announcements/${encodeURIComponent(id)}`);
+}
+
+export async function createAnnouncement(payload: Record<string, unknown>) {
+  return request<any>('/api/announcements', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function updateAnnouncement(id: string, payload: Record<string, unknown>) {
+  return request<any>(`/api/announcements/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export async function deleteAnnouncement(id: string) {
+  return request<boolean>(`/api/announcements/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+
 // Helpers
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

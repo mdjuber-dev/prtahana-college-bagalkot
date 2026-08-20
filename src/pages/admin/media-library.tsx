@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { uploadFile, listMediaAssets, deleteMediaAsset, replaceMediaAsset } from '@/lib/api';
-import { Upload, Copy, Check, FileText, Search, ExternalLink, Trash2, RefreshCw } from 'lucide-react';
+import { Upload, Copy, Check, FileText, Search, ExternalLink, Trash2, RefreshCw, GalleryHorizontal } from 'lucide-react';
 import { getMediaUrl } from '@/lib/media-url';
+import AdminPageHeader from '@/components/admin/ui/AdminPageHeader';
 
 interface MediaItem {
   id: string;
@@ -38,21 +39,25 @@ export default function AdminMediaLibrary() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     setUploading(true);
     try {
-      const uploadCat = category === 'all' ? 'gallery' : category;
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        await uploadFile(file, uploadCat);
+        await uploadFile(files[i], category === 'all' ? 'misc' : category);
       }
       await loadMedia();
     } catch (err) {
-      alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)));
+      console.error('Upload failed:', err);
+      alert('Upload failed. Please check file size and format.');
     } finally {
       setUploading(false);
-      e.target.value = '';
     }
+  };
+
+  const handleCopy = (id: string, path: string) => {
+    const fullUrl = getMediaUrl(path);
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -74,12 +79,6 @@ export default function AdminMediaLibrary() {
     }
   };
 
-  const copyUrl = (id: string, url: string) => {
-    navigator.clipboard.writeText(getMediaUrl(url));
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
   const filtered = items.filter((item) => {
     const matchesCategory = category === 'all' || item.category.toLowerCase() === category.toLowerCase();
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
@@ -88,37 +87,38 @@ export default function AdminMediaLibrary() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-secondary-200/80 shadow-sm">
-        <div>
-          <h2 className="text-xl font-black text-secondary-900 tracking-tight">Institutional Media Library</h2>
-          <p className="text-xs text-secondary-500 mt-1">Upload, organize, replace, and manage persistent database-stored assets for the public website.</p>
-        </div>
+      <AdminPageHeader
+        title="Institutional Media Library"
+        subtitle="Upload, organize, replace, and manage persistent database-stored assets for the public website."
+        icon={GalleryHorizontal}
+        badge="Asset Repository"
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void loadMedia()}
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all backdrop-blur-md border border-white/10 flex items-center gap-2"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+            <label className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+              <Upload size={14} />
+              <span>{uploading ? 'Uploading...' : 'Upload Media Asset'}</span>
+              <input type="file" multiple onChange={handleUpload} disabled={uploading} className="hidden" />
+            </label>
+          </div>
+        }
+      />
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => void loadMedia()}
-            className="p-2.5 rounded-xl border border-secondary-200 text-secondary-600 hover:bg-slate-50 transition-colors"
-            title="Refresh Media List"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          </button>
-          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 transition-colors shadow-sm cursor-pointer self-start sm:self-auto">
-            <Upload size={16} />
-            {uploading ? 'Uploading...' : 'Upload Media Asset'}
-            <input type="file" multiple onChange={handleUpload} disabled={uploading} className="hidden" />
-          </label>
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-secondary-200/80">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
           {['all', 'gallery', 'homepage', 'courses', 'achievements', 'documents', 'career-applications', 'misc'].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategory(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition-all ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold capitalize whitespace-nowrap transition-all ${
                 category === cat
-                  ? 'bg-primary-600 text-white shadow-sm'
+                  ? 'bg-primary-600 text-white shadow-xs'
                   : 'bg-slate-100 text-secondary-600 hover:bg-slate-200'
               }`}
             >
@@ -128,13 +128,13 @@ export default function AdminMediaLibrary() {
         </div>
 
         <div className="relative w-full sm:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
           <input
             type="text"
-            placeholder="Search media..."
+            placeholder="Search media assets..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border border-secondary-200 outline-none focus:border-primary-500"
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 outline-none focus:border-primary-500 transition-all placeholder-secondary-400"
           />
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function AdminMediaLibrary() {
 
                 <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
                   <button
-                    onClick={() => copyUrl(item.id, item.url)}
+                    onClick={() => handleCopy(item.id, item.url)}
                     className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary-600 hover:text-primary-700"
                     title="Copy Public URL"
                   >

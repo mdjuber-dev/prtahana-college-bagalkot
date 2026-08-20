@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Eye, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { Download, Eye, RefreshCw, Search, Trash2, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/ui/AdminPageHeader';
+import StatusBadge from '@/components/admin/ui/StatusBadge';
 import {
   CAREER_APPLICATION_STATUSES,
   deleteCareerApplication,
@@ -139,81 +141,162 @@ export default function AdminCareerApplicationsPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-primary-700">Career Applications</p>
-          <h2 className="text-2xl font-bold">Applications</h2>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Career Applications"
+        subtitle="Review faculty and administrative job applications, inspect candidate resumes, and update recruitment status."
+        icon={FileText}
+        badge="Applicant Tracking System"
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={load}
+              disabled={loading}
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all backdrop-blur-md border border-white/10 flex items-center gap-2"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+            <button
+              onClick={exportCsv}
+              disabled={!filtered.length}
+              className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <Download size={14} />
+              <span>Export CSV</span>
+            </button>
+          </div>
+        }
+      />
+
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{error}</span>
         </div>
-        <div className="flex gap-2">
-          <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg bg-white disabled:opacity-50">
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
-          </button>
-          <button onClick={exportCsv} disabled={!filtered.length} className="px-3 py-2 border rounded-lg bg-white disabled:opacity-50">Export</button>
+      )}
+
+      {notice && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 size={16} className="shrink-0" />
+          <span>{notice}</span>
+        </div>
+      )}
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name, email, mobile, application ref or position..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder-secondary-400"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-secondary-700 focus:outline-none focus:border-primary-500"
+          >
+            <option value="all">All Statuses</option>
+            {CAREER_APPLICATION_STATUSES.map((st) => (
+              <option key={st} value={st}>
+                {st}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={jobFilter}
+            onChange={(e) => setJobFilter(e.target.value)}
+            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-secondary-700 focus:outline-none focus:border-primary-500"
+          >
+            <option value="all">All Job Vacancies</option>
+            {jobs.map((job) => (
+              <option key={job.id} value={job.id}>
+                {job.title}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {error && <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-semibold">{error}</div>}
-      {notice && <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold">{notice}</div>}
-
-      <div className="grid lg:grid-cols-[1fr_auto_auto] gap-3">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, mobile, application ID or position" className="w-full pl-9 pr-3 py-2 border rounded-lg" />
-        </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border rounded-lg bg-white">
-          <option value="all">All Statuses</option>
-          {CAREER_APPLICATION_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-        </select>
-        <select value={jobFilter} onChange={(e) => setJobFilter(e.target.value)} className="px-3 py-2 border rounded-lg bg-white">
-          <option value="all">All Jobs</option>
-          {jobs.map((job) => <option key={job.id} value={job.id}>{job.title}</option>)}
-        </select>
-      </div>
-
-      <div className="bg-white rounded-xl border shadow-sm overflow-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-secondary-50">
-            <tr className="border-b">
-              <th className="p-3">Application ID</th>
-              <th className="p-3">Applicant</th>
-              <th className="p-3">Position</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">Mobile</th>
-              <th className="p-3">Experience</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Submitted</th>
-              <th className="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={9} className="p-8 text-center text-secondary-500">Loading applications...</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={9} className="p-8 text-center text-secondary-500">No career applications found.</td></tr>
-            ) : (
-              filtered.map((app) => (
-                <tr key={app.id} className="border-b hover:bg-primary-50">
-                  <td className="p-3 font-bold">{app.application_ref}</td>
-                  <td className="p-3">{app.full_name}</td>
-                  <td className="p-3">{app.career_jobs?.title || '-'}</td>
-                  <td className="p-3">{app.email}</td>
-                  <td className="p-3">{app.mobile}</td>
-                  <td className="p-3">{app.years_experience}</td>
-                  <td className="p-3"><StatusPill status={app.status} /></td>
-                  <td className="p-3 whitespace-nowrap">{new Date(app.created_at).toLocaleString('en-IN')}</td>
-                   <td className="p-3">
-                     <div className="flex justify-end gap-2">
-                       <button onClick={() => setSelected(app)} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border"><Eye size={14} /> View</button>
-                       <button onClick={() => openResume(app)} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border"><Download size={14} /> Resume</button>
-                       <button onClick={() => deleteApp(app)} className="p-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50" title="Delete"><Trash2 size={14} /></button>
-                     </div>
-                   </td>
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 text-secondary-500 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200/80">
+                <th className="py-4 px-6">App Ref</th>
+                <th className="py-4 px-4">Applicant</th>
+                <th className="py-4 px-4">Position</th>
+                <th className="py-4 px-4">Email</th>
+                <th className="py-4 px-4">Mobile</th>
+                <th className="py-4 px-4">Experience</th>
+                <th className="py-4 px-4">Status</th>
+                <th className="py-4 px-4">Submitted</th>
+                <th className="py-4 px-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={9} className="py-16 text-center text-secondary-400 font-semibold">
+                    Loading job applications...
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-16 text-center text-secondary-500 font-semibold">
+                    No career applications found matching criteria.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((app) => (
+                  <tr key={app.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-4 px-6 font-mono font-bold text-secondary-900">{app.application_ref}</td>
+                    <td className="py-4 px-4 font-bold text-secondary-900">{app.full_name}</td>
+                    <td className="py-4 px-4 font-semibold text-secondary-700">{app.career_jobs?.title || '-'}</td>
+                    <td className="py-4 px-4 font-medium text-secondary-600">{app.email}</td>
+                    <td className="py-4 px-4 font-medium text-secondary-600">{app.mobile}</td>
+                    <td className="py-4 px-4 font-medium text-secondary-600">{app.years_experience}</td>
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <StatusBadge status={app.status} size="sm" />
+                    </td>
+                    <td className="py-4 px-4 whitespace-nowrap text-secondary-500 font-medium">
+                      {new Date(app.created_at).toLocaleDateString('en-IN')}
+                    </td>
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelected(app)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 text-secondary-700 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 transition-colors font-bold text-xs inline-flex items-center gap-1"
+                        >
+                          <Eye size={14} /> View
+                        </button>
+                        <button
+                          onClick={() => openResume(app)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 text-secondary-700 hover:bg-slate-100 transition-colors font-bold text-xs inline-flex items-center gap-1"
+                        >
+                          <Download size={14} /> Resume
+                        </button>
+                        <button
+                          onClick={() => deleteApp(app)}
+                          className="p-1.5 rounded-xl text-secondary-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Delete Application"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {selected && (
@@ -266,16 +349,6 @@ export default function AdminCareerApplicationsPage() {
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const cls = status === 'selected' || status === 'shortlisted'
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    : status === 'rejected'
-      ? 'bg-red-50 text-red-700 border-red-200'
-      : status === 'reviewing'
-        ? 'bg-blue-50 text-blue-700 border-blue-200'
-        : 'bg-amber-50 text-amber-700 border-amber-200';
-  return <span className={`inline-flex px-2.5 py-1 rounded-full border text-xs font-bold ${cls}`}>{status}</span>;
-}
 
 function Detail({ label, value, link }: { label: string; value: string; link?: boolean }) {
   const isLink = link && value !== '-';

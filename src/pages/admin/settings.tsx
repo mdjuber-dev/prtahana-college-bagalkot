@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { fetchSiteConfig, upsertSiteConfig } from '@/lib/cms';
 import { buildDefaultSiteCmsPayload } from '@/lib/cms-context';
 import { getCurrentAdmin, getSiteCmsRow } from '@/lib/api';
-import { Settings, User, Database, Shield, RefreshCw, ExternalLink } from 'lucide-react';
+import { Settings, User, Database, Shield, RefreshCw, ExternalLink, Sliders } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/ui/AdminPageHeader';
 
 export default function AdminSettingsPage() {
   const [email, setEmail] = useState('');
@@ -44,18 +45,20 @@ export default function AdminSettingsPage() {
   };
 
   if (loading) {
-    return <div className="p-8 bg-white rounded-2xl border text-center font-semibold">Loading settings...</div>;
+    return <div className="p-8 bg-white rounded-3xl border border-slate-200 text-center font-semibold text-xs text-secondary-500">Loading system settings...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-secondary-200/80 shadow-sm">
-        <p className="text-xs font-bold text-primary-700 uppercase tracking-widest">Administration</p>
-        <h2 className="text-2xl font-black text-secondary-900">Settings</h2>
-      </div>
+      <AdminPageHeader
+        title="System Settings & Config"
+        subtitle="Manage administrator access security, database CMS synchronization, and system policies."
+        icon={Sliders}
+        badge="System Configuration"
+      />
 
       {message && (
-        <div className={`p-4 rounded-2xl border text-sm font-semibold ${message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+        <div className={`p-4 rounded-2xl border text-xs font-semibold ${message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
           {message.text}
         </div>
       )}

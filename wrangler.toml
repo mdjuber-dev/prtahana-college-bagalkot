@@ -1,6 +1,12 @@
 name = "prarthana-pu-college"
-main = "src/worker.ts"
+main = "src/worker.js"
 compatibility_date = "2026-08-15"
+
+routes = [
+  { pattern = "prarthanapucollegebagalkot.in/*", custom_domain = true }
+]
 
 [assets]
 directory = "dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
