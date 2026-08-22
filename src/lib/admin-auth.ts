@@ -1,4 +1,4 @@
-import { clearAdminToken, getAdminToken, getCurrentAdmin } from './api';
+import { ApiError, clearAdminToken, getAdminToken, getCurrentAdmin } from './api';
 
 export type AdminUser = {
   id: string;
@@ -21,9 +21,21 @@ export async function getCurrentAdminAccess(): Promise<AdminAccess> {
 
   try {
     const { user } = await getCurrentAdmin();
-    return { status: 'authorized', user };
+    return { status: 'authorized' as const, user };
   } catch (error) {
-    clearAdminToken();
-    return { status: 'guest' };
+    const status = error instanceof ApiError ? error.status : -1;
+
+    // Only a genuine auth rejection invalidates the stored session. A network
+    // failure or a backend 5xx (e.g. Render cold start) must NOT sign the admin
+    // out, otherwise refreshing the dashboard during a blip loses the session.
+    if (status === 401 || status === 403) {
+      clearAdminToken();
+      return { status: 'guest' };
+    }
+
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unable to verify the admin session.',
+    };
   }
 }

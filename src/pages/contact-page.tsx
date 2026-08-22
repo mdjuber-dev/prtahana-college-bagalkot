@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import PageHero from '@/components/shared/page-hero';
 import CTASection from '@/components/shared/cta-section';
 import { useCMS } from '@/lib/cms-context';
+import { siteConfig as staticSiteConfig } from '@/lib/site-config';
 import { getTelLink, getWhatsAppLink } from '@/lib/communication';
 import { submitEnquiryToGoogleSheets } from '@/lib/google-script-config';
 import { submitGeneralEnquiryToNeon } from '@/lib/submissions';
@@ -47,9 +48,62 @@ function buildWhatsAppMessage(form: ContactFormData): string {
   return lines.join('\n');
 }
 
+function MapLocationCard({
+  siteConfig,
+  placeUrl,
+  directionsUrl,
+}: {
+  siteConfig: { name: string; logo: string; address: { full: string } };
+  placeUrl: string;
+  directionsUrl: string;
+}) {
+  return (
+    <>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-white p-1 border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
+          <img
+            src={getMediaUrl(siteConfig.logo)}
+            alt={`${siteConfig.name} logo`}
+            className="w-full h-full object-contain"
+            width={40}
+            height={40}
+            loading="lazy"
+          />
+        </div>
+        <div className="min-w-0">
+          <h3 className="font-extrabold text-secondary-900 text-sm leading-tight">{siteConfig.name}</h3>
+          <p className="text-secondary-600 font-bold text-[11px]">Bagalkot, Karnataka</p>
+        </div>
+      </div>
+      <p className="text-secondary-700 font-medium text-[11px] leading-relaxed">{siteConfig.address.full}</p>
+      <div className="pt-1 flex flex-wrap items-center gap-2">
+        <a
+          href={placeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3 py-2 bg-primary-900 hover:bg-primary-950 text-white font-bold rounded-xl text-[11px] transition-colors inline-flex items-center gap-1.5 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
+        >
+          <MapPin size={12} aria-hidden="true" /> Open in Google Maps
+        </a>
+        <a
+          href={directionsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3 py-2 bg-gradient-accent text-white font-bold rounded-xl text-[11px] hover:shadow-md transition-shadow inline-flex items-center gap-1.5 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1"
+        >
+          <Send size={12} aria-hidden="true" /> Get Directions
+        </a>
+      </div>
+    </>
+  );
+}
+
 export default function ContactPage() {
   const cms = useCMS();
   const siteConfig = cms.siteConfig;
+  const MAPS_PLACE_URL = siteConfig.mapsPlaceUrl || staticSiteConfig.mapsPlaceUrl;
+  const MAPS_DIRECTIONS_URL = siteConfig.mapsDirectionsUrl || staticSiteConfig.mapsDirectionsUrl;
+  const MAPS_EMBED_URL = siteConfig.mapsEmbed || staticSiteConfig.mapsEmbed;
   const contactCards = useMemo(() => [
     {
       icon: Phone,
@@ -74,7 +128,7 @@ export default function ContactPage() {
         siteConfig.address.line3,
         `${siteConfig.address.city}, ${siteConfig.address.state} ${siteConfig.address.pincode}`,
       ].filter(Boolean) as string[],
-      link: 'https://www.google.com/maps/place/Prarthana+P+U+Science+College+Bagalkot/@16.1824562,75.6938318,398m/data=!3m1!1e3!4m6!3m5!1s0x3bc778f3349a462f:0x27050572c74ff80a!8m2!3d16.1825746!4d75.6936906!16s%2Fg%2F11dxnsktfw?entry=ttu&g_ep=EgoyMDI2MDgxMi4wIKXMDSoASAFQAw%3D%3D',
+      link: MAPS_PLACE_URL,
       linkLabel: 'Get directions',
     },
     {
@@ -477,53 +531,35 @@ export default function ContactPage() {
               <p className="text-secondary-600 mb-6">
                 Visit our campus at {siteConfig.address.full}.
               </p>
-              <div className="rounded-3xl overflow-hidden shadow-soft h-[400px] md:h-[500px] border border-primary-100/70 relative">
-                <iframe
-                  src={siteConfig.mapsEmbed}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title={`Map showing ${siteConfig.name} location`}
-                  aria-label={`Map of ${siteConfig.name}`}
-                  allowFullScreen
-                />
-                <div className="absolute bottom-4 left-4 right-4 sm:right-auto max-w-sm bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-slate-100 space-y-2.5 text-xs text-secondary-800 z-10">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white p-1 border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
-                      <img
-                        src={getMediaUrl(siteConfig.logo)}
-                        alt={siteConfig.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-secondary-900 text-sm leading-tight">{siteConfig.name}</h4>
-                      <p className="text-secondary-500 font-bold text-[11px]">Bagalkot, Karnataka</p>
-                    </div>
+              <div className="rounded-3xl overflow-hidden shadow-soft border border-primary-100/70 bg-white">
+                <div className="relative h-[320px] sm:h-[420px] lg:h-[500px] w-full bg-slate-100">
+                  <iframe
+                    src={MAPS_EMBED_URL}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, display: 'block' }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={`Map showing ${siteConfig.name} location`}
+                    aria-label={`Map of ${siteConfig.name}, ${siteConfig.address.full}`}
+                    allowFullScreen
+                  />
+                  {/* Location card: overlaid on tablet/desktop, stacked below the map on phones
+                      so it never covers the campus marker on small screens. */}
+                  <div className="hidden sm:block absolute bottom-4 left-4 max-w-sm bg-white p-4 rounded-2xl shadow-xl border border-slate-200 space-y-2.5 text-xs text-secondary-800 z-10">
+                    <MapLocationCard
+                      siteConfig={siteConfig}
+                      placeUrl={MAPS_PLACE_URL}
+                      directionsUrl={MAPS_DIRECTIONS_URL}
+                    />
                   </div>
-                  <p className="text-secondary-600 font-medium text-[11px] leading-relaxed">
-                    {siteConfig.address.full}
-                  </p>
-                  <div className="pt-1 flex items-center gap-2">
-                    <a
-                      href="https://www.google.com/maps?q=16.1790607,75.6906218+(Prarthana+PU+Science+College+Bagalkot)"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-primary-900 hover:bg-primary-950 text-white font-bold rounded-xl text-[11px] transition-all inline-flex items-center gap-1 shadow-sm"
-                    >
-                      Open in Google Maps ↗
-                    </a>
-                    <a
-                      href="https://www.google.com/maps/dir/?api=1&destination=16.1790607,75.6906218"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-gradient-accent text-white font-bold rounded-xl text-[11px] hover:shadow-md transition-all inline-flex items-center gap-1 shadow-sm"
-                    >
-                      Get Directions ↗
-                    </a>
-                  </div>
+                </div>
+                <div className="sm:hidden p-4 border-t border-slate-200 space-y-2.5 text-xs text-secondary-800">
+                  <MapLocationCard
+                    siteConfig={siteConfig}
+                    placeUrl={MAPS_PLACE_URL}
+                    directionsUrl={MAPS_DIRECTIONS_URL}
+                  />
                 </div>
               </div>
             </motion.div>

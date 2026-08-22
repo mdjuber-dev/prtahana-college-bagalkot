@@ -91,7 +91,9 @@ export default function AnnouncementsPage() {
       setError(null);
       try {
         const data = await listAnnouncements(false);
-        setAnnouncements(data || []);
+        // Skip incomplete records (e.g. a row saved before its title was filled in)
+        // so the public listing never renders an empty, unclickable card.
+        setAnnouncements((data || []).filter((item: Announcement) => Boolean(item?.title && String(item.title).trim())));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load announcements');
       } finally {

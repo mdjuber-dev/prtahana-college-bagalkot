@@ -33,6 +33,9 @@ export interface CMSSiteConfig {
   officeHours?: string;
   address: { line1: string; line2: string; line3?: string; city: string; state: string; pincode: string; full: string; };
   mapsEmbed: string;
+  coordinates?: { lat: number; lng: number };
+  mapsPlaceUrl?: string;
+  mapsDirectionsUrl?: string;
   social: { facebook: string; instagram: string; youtube: string; };
   established: number;
   logo: string;

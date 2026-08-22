@@ -98,6 +98,9 @@ function AppShell() {
             <Route path="/fee-structure" element={<Suspense fallback={<PageSkeleton page="fee" />}><FeeStructurePage /></Suspense>} />
             <Route path="/transport" element={<Suspense fallback={<PageSkeleton page="section" />}><TransportPage /></Suspense>} />
             <Route path="/admission" element={<Suspense fallback={<PageSkeleton page="admission" />}><AdmissionPage /></Suspense>} />
+            {/* Alias: visitors and older links use the plural form. Redirect (not duplicate)
+                so the canonical /admission URL stays the single indexable page. */}
+            <Route path="/admissions" element={<Navigate to="/admission" replace />} />
             <Route path="/admission-success" element={<Suspense fallback={<PageSkeleton page="section" />}><AdmissionSuccessPage /></Suspense>} />
             <Route path="/contact" element={<Suspense fallback={<PageSkeleton page="section" />}><ContactPage /></Suspense>} />
             <Route path="/careers" element={<Suspense fallback={<PageSkeleton page="section" />}><CareersPage /></Suspense>} />

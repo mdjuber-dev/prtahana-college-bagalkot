@@ -1,20 +1,99 @@
-// Centralized API Client for Prarthana PU College Management System
+﻿// Centralized API Client for Prarthana PU College Management System
+
+/**
+ * Canonical production backend (Render). This is the single source of truth so a
+ * missing or mistyped VITE_API_BASE_URL can never break the production build again.
+ */
+const PRODUCTION_API_URL = 'https://prarthanaclgbgk.onrender.com';
+
+/** Hosts that must never be used as the backend API origin in a production build. */
+const FORBIDDEN_API_HOST_PATTERNS = [
+  /localhost/i,
+  /^127\./,
+  /^0\.0\.0\.0$/,
+  /workers\.dev$/i,
+  /\.pages\.dev$/i,
+];
+
+/**
+ * The frontend is served from these hosts. They are static asset hosts only and do
+ * NOT expose /api, so they can never be a valid API base URL.
+ */
+const FRONTEND_HOSTS = [
+  'prarthanapucollegebagalkot.in',
+  'www.prarthanapucollegebagalkot.in',
+];
 
 const getBaseUrl = (): string => {
   const envUrl = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL) as string | undefined;
-  if (envUrl) {
-    return envUrl.replace(/\/+$/, '');
+  const candidate = String(envUrl || '').trim().replace(/\/+$/, '');
+
+  if (candidate) {
+    try {
+      const parsed = new URL(candidate);
+      const host = parsed.hostname;
+      const isForbidden = FORBIDDEN_API_HOST_PATTERNS.some((pattern) => pattern.test(host));
+      const isFrontendHost = FRONTEND_HOSTS.includes(host.toLowerCase());
+
+      // In a production build, reject dev/preview hosts and the frontend's own domain.
+      if (!import.meta.env.DEV && (isForbidden || isFrontendHost)) {
+        console.warn(
+          `[api] Ignoring invalid VITE_API_BASE_URL host "${host}". Falling back to the production Render API.`,
+        );
+        return PRODUCTION_API_URL;
+      }
+
+      // Never allow an insecure API origin when the page itself is served over HTTPS
+      // (browsers block mixed content, which surfaces as a generic network failure).
+      if (
+        parsed.protocol === 'http:' &&
+        typeof window !== 'undefined' &&
+        window.location.protocol === 'https:' &&
+        !isForbidden
+      ) {
+        parsed.protocol = 'https:';
+        return parsed.origin;
+      }
+
+      return parsed.origin + (parsed.pathname !== '/' ? parsed.pathname.replace(/\/+$/, '') : '');
+    } catch {
+      console.warn(`[api] VITE_API_BASE_URL is not a valid URL. Falling back to the production Render API.`);
+      return PRODUCTION_API_URL;
+    }
   }
+
   if (import.meta.env.DEV) {
     return 'http://localhost:3000';
   }
-  return 'https://prarthanaclgbgk.onrender.com';
+  return PRODUCTION_API_URL;
 };
 
 export const API_URL = getBaseUrl();
 const TOKEN_KEY = 'prarthana_admin_token';
 
 export type ApiResult<T> = { success: true; data: T } | { success: false; error: string };
+
+/**
+ * Error thrown by the API client.
+ * `status` is the HTTP status when the server answered, or 0 when the request never
+ * reached the server (DNS failure, offline, blocked by CORS). Callers use this to
+ * distinguish "you are logged out" (401) from "the network hiccuped" (0/5xx) so a
+ * transient blip never destroys a valid admin session.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly isNetworkError: boolean;
+
+  constructor(message: string, status: number, options?: { cause?: unknown }) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.isNetworkError = status === 0;
+    if (options?.cause !== undefined) {
+      (this as Error & { cause?: unknown }).cause = options.cause;
+    }
+  }
+}
 
 function authHeaders(): HeadersInit {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -38,9 +117,23 @@ async function request<T>(path: string, options: RequestInit = {}, retries = 2):
           },
         });
       } catch (netErr) {
-        lastError = new Error('Unable to connect to server. Please check network or backend server status.');
+        // A thrown fetch() means the request never reached the server: DNS failure,
+        // offline client, blocked mixed content, or a CORS pre-flight rejection.
+        // Surface the actual API host so misconfiguration is immediately visible.
+        let host = API_URL;
+        try {
+          host = new URL(API_URL).host;
+        } catch {
+          /* keep raw value */
+        }
+        lastError = new ApiError(
+          `Unable to reach the server at ${host}. Please check your internet connection and try again.`,
+          0,
+          { cause: netErr },
+        );
+        console.error(`[api] Network request to ${url} failed:`, netErr);
         if (attempt < retries) {
-          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
           continue;
         }
         throw lastError;
@@ -59,9 +152,12 @@ async function request<T>(path: string, options: RequestInit = {}, retries = 2):
       }
 
       if (!response.ok || !result.success) {
-        lastError = new Error(result.error || `Request failed with status ${response.status}`);
+        lastError = new ApiError(
+          result.error || `Request failed with status ${response.status}`,
+          response.status,
+        );
         if (attempt < retries && response.status >= 500) {
-          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
           continue;
         }
         throw lastError;
@@ -336,3 +432,4 @@ export async function uploadCareerResume(file: File) {
     }),
   });
 }
+

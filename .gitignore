@@ -8,13 +8,29 @@ supabase/.temp/
 .env.*
 !.env.example
 
+# Secrets must only ever live in platform environment variables
+*.pem
+*.key
+.dev.vars
+
+# Build / tooling caches
 tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
+tsconfig.tsbuildinfo
 vite.config.ts.timestamp-*
+.wrangler/
+wrangler-output/
+
+# Local uploads cache (media is stored in PostgreSQL, disk copy is ephemeral)
+server/uploads/
+
+# Ad-hoc debugging / audit artifacts
+browser-test-report.txt
+fix-worker.cjs
 
 prarthana-clg-bgk-BACKUP/
 
 pratharna-clg-bgk-BACKUP/
 
-pratharna-clg-bgk-BACKUP/
-
 /pratharna-clg-bgk/
+

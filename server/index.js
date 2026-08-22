@@ -35,7 +35,10 @@ const allowedOrigins = new Set([
 app.use(cors({
   origin(origin, callback) {
     if (!origin || allowedOrigins.has(origin)) return callback(null, true);
-    return callback(new Error("Not allowed by CORS"));
+    // Reject without throwing: the browser enforces the block, and we avoid
+    // turning a cross-origin probe into a noisy HTTP 500.
+    console.warn(`Blocked cross-origin request from disallowed origin: ${origin}`);
+    return callback(null, false);
   },
   credentials: true,
 }));
@@ -125,13 +128,23 @@ function signToken(payload) {
 }
 
 function verifyToken(token) {
-  const [body, signature] = String(token || "").split(".");
-  if (!body || !signature) return null;
-  const expected = crypto.createHmac("sha256", sessionSecret).update(body).digest("base64url");
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
-  const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
-  if (!payload.exp || payload.exp < Date.now()) return null;
-  return payload;
+  try {
+    const [body, signature] = String(token || "").split(".");
+    if (!body || !signature) return null;
+    const expected = crypto.createHmac("sha256", sessionSecret).update(body).digest("base64url");
+    const signatureBuf = Buffer.from(signature);
+    const expectedBuf = Buffer.from(expected);
+    // timingSafeEqual throws on length mismatch, so compare lengths first.
+    if (signatureBuf.length !== expectedBuf.length) return null;
+    if (!crypto.timingSafeEqual(signatureBuf, expectedBuf)) return null;
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+    if (!payload || typeof payload !== "object") return null;
+    if (!payload.exp || payload.exp < Date.now()) return null;
+    return payload;
+  } catch {
+    // A malformed/forged token is an authentication failure (401), never a 500.
+    return null;
+  }
 }
 
 function getBearer(req) {
@@ -251,6 +264,11 @@ initMediaUploadsTable();
 
 async function initAnnouncementsTable() {
   try {
+    // Detect whether the table already exists BEFORE creating it. Sample content is
+    // only inserted for a genuinely new install — never into an existing production
+    // table that an administrator has deliberately emptied.
+    const existedBefore = await tableExists("announcements");
+
     await queryWithRetry(`
       CREATE TABLE IF NOT EXISTS public.announcements (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -275,6 +293,11 @@ async function initAnnouncementsTable() {
       );
     `);
     console.log("Announcements table ready in PostgreSQL.");
+
+    if (existedBefore) {
+      console.log("Announcements table already existed — skipping sample content.");
+      return;
+    }
 
     const countRes = await queryWithRetry("SELECT COUNT(*)::int AS count FROM public.announcements");
     if (countRes.rows[0]?.count === 0) {
@@ -325,21 +348,6 @@ async function initAnnouncementsTable() {
         );
       `);
       console.log("Seeded initial announcements data.");
-    } else {
-      await queryWithRetry(`
-        UPDATE public.announcements
-        SET image_url = CASE 
-          WHEN title LIKE 'Admissions Open%' THEN '/frontpagepamplet.jpeg'
-          WHEN title LIKE 'Annual Science Exhibition%' THEN '/campus-life-1.jpg'
-          WHEN title LIKE 'Pre-Board Examination%' THEN '/library.jpg'
-          ELSE image_url
-        END
-        WHERE (image_url IS NULL OR image_url = '') AND (
-          title LIKE 'Admissions Open%' OR 
-          title LIKE 'Annual Science Exhibition%' OR 
-          title LIKE 'Pre-Board Examination%'
-        )
-      `);
     }
   } catch (err) {
     console.error("Failed to initialize announcements table:", err);
@@ -979,22 +987,50 @@ app.get("/api/career-applications/:id/resume", requireAdmin, async (req, res) =>
     );
     if (!result.rows.length) return fail(res, 404, "Application not found");
 
-    const app = result.rows[0];
-    const resumePath = String(app.resume_path || "");
+    const application = result.rows[0];
+    const resumePath = String(application.resume_path || "");
     if (!resumePath) return fail(res, 404, "Resume not found");
-
-    let diskPath;
-    if (resumePath.startsWith("/uploads/career-applications/")) {
-      const filename = path.basename(resumePath);
-      diskPath = path.join(uploadRoot, "career-applications", filename);
-    } else if (resumePath.startsWith("resumes/")) {
+    if (!resumePath.startsWith("/uploads/career-applications/")) {
+      // Legacy storage paths (e.g. "resumes/...") are no longer retrievable.
       return fail(res, 404, "Resume not found");
-    } else {
-      return fail(res, 400, "Invalid resume path");
     }
 
+    const rawName = String(application.resume_file_name || path.basename(resumePath));
+    const safeName = rawName.replace(/[\r\n"\\]/g, "_");
+    const disposition = req.query.download === "true" ? "attachment" : "inline";
+    const extensionMimeTypes = {
+      ".pdf": "application/pdf",
+      ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+
+    // 1) Prefer the database copy. Render's filesystem is ephemeral, so PostgreSQL
+    //    is the durable source of truth for uploaded resumes.
+    try {
+      const stored = await queryWithRetry(
+        "SELECT mime_type, data FROM public.media_uploads WHERE url = $1 LIMIT 1",
+        [resumePath],
+      );
+      const row = stored.rows[0];
+      if (row?.data) {
+        const match = String(row.data).match(/^data:(.+);base64,(.+)$/);
+        if (match) {
+          const buffer = Buffer.from(match[2], "base64");
+          res.setHeader("Content-Type", row.mime_type || match[1] || "application/octet-stream");
+          res.setHeader("Content-Disposition", `${disposition}; filename="${safeName}"`);
+          res.setHeader("Cache-Control", "private, no-store");
+          return res.send(buffer);
+        }
+      }
+    } catch (dbError) {
+      console.error("Resume database lookup failed, falling back to disk:", dbError?.message || dbError);
+    }
+
+    // 2) Fall back to the local disk cache (older uploads shipped with the repo).
+    const diskPath = path.join(uploadRoot, "career-applications", path.basename(resumePath));
     const resolved = path.resolve(diskPath);
-    if (!resolved.startsWith(uploadRoot)) return fail(res, 400, "Invalid resume path");
+    const resolvedRoot = path.resolve(uploadRoot);
+    if (!resolved.startsWith(resolvedRoot + path.sep)) return fail(res, 400, "Invalid resume path");
 
     try {
       await fsPromises.access(resolved);
@@ -1003,17 +1039,9 @@ app.get("/api/career-applications/:id/resume", requireAdmin, async (req, res) =>
     }
 
     const ext = path.extname(resolved).toLowerCase();
-    const mimeTypes = {
-      ".pdf": "application/pdf",
-      ".doc": "application/msword",
-      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    };
-    const mimeType = mimeTypes[ext] || "application/octet-stream";
-    const fileName = String(app.resume_file_name || path.basename(resolved)).replace(/"/g, '\\"');
-    const disposition = req.query.download === "true" ? "attachment" : "inline";
-
-    res.setHeader("Content-Type", mimeType);
-    res.setHeader("Content-Disposition", `${disposition}; filename="${fileName}"`);
+    res.setHeader("Content-Type", extensionMimeTypes[ext] || "application/octet-stream");
+    res.setHeader("Content-Disposition", `${disposition}; filename="${safeName}"`);
+    res.setHeader("Cache-Control", "private, no-store");
     return res.sendFile(resolved);
   } catch (error) {
     if (error?.code === "ENOENT") return fail(res, 404, "Resume not found");
@@ -1125,26 +1153,6 @@ app.get("/api/announcements", async (req, res) => {
   try {
     const admin = req.query.admin === "true";
     if (admin && !verifyToken(getBearer(req))) return fail(res, 401, "Admin session required");
-    
-    // Auto-patch null image_urls for initial default entries if present
-    try {
-      await queryWithRetry(`
-        UPDATE public.announcements
-        SET image_url = CASE 
-          WHEN title LIKE 'Admissions Open%' THEN '/frontpagepamplet.jpeg'
-          WHEN title LIKE 'Annual Science Exhibition%' THEN '/campus-life-1.jpg'
-          WHEN title LIKE 'Pre-Board Examination%' THEN '/library.jpg'
-          ELSE image_url
-        END
-        WHERE (image_url IS NULL OR image_url = '') AND (
-          title LIKE 'Admissions Open%' OR 
-          title LIKE 'Annual Science Exhibition%' OR 
-          title LIKE 'Pre-Board Examination%'
-        )
-      `);
-    } catch (e) {
-      // Non-critical auto-patch
-    }
 
     let where = "";
     if (!admin) {

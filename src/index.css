@@ -25,9 +25,11 @@
   .bg-gradient-accent { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
   .bg-gradient-hero { background: linear-gradient(135deg, #0a1931 0%, #1a3d63 50%, #060e1c 100%); }
   .card-shadow { box-shadow: 0 4px 25px -2px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
-  .glass { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); border-bottom: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 30px rgba(10, 25, 49, 0.06); }
-  .glass-scrolled { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(26, 61, 99, 0.1); box-shadow: 0 4px 30px rgba(10, 25, 49, 0.08); }
-  .glass-mobile { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+  /* Navbar surfaces: kept translucent for depth, but opaque enough that navy nav
+     text always clears WCAG AA contrast over hero imagery (no washed-out text). */
+  .glass { background: rgba(255, 255, 255, 0.86); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); border-bottom: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 30px rgba(10, 25, 49, 0.06); }
+  .glass-scrolled { background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(26, 61, 99, 0.12); box-shadow: 0 4px 30px rgba(10, 25, 49, 0.08); }
+  .glass-mobile { background: rgba(255, 255, 255, 0.99); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
   .section-bg-soft { background-image: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(249, 115, 22, 0.02) 100%); background-blend-mode: soft-light; }
   .shimmer-bg { background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%); background-size: 1000px 100%; animation: shimmer 2s linear infinite; }
   .marquee-track { display: flex; width: max-content; will-change: transform; backface-visibility: hidden; }

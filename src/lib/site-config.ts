@@ -16,7 +16,18 @@ export const siteConfig = {
     pincode: '587101',
     full: 'Prarthana PU Science College, 5MMV+2FG, Kaulpet, Bagalkot, Karnataka 587101',
   },
-  mapsEmbed: 'https://maps.google.com/maps?q=16.1790607,75.6906218+(Prarthana+PU+Science+College+Bagalkot)&t=&z=16&ie=UTF8&iwloc=B&output=embed',
+  /** Official college coordinates (verified against the client-provided Google Maps place). */
+  coordinates: {
+    lat: 16.1790607,
+    lng: 75.6906218,
+  },
+  /** Embedded map: centred on the campus at street-level zoom (never a world view). */
+  mapsEmbed: 'https://maps.google.com/maps?q=16.1790607,75.6906218+(Prarthana+PU+Science+College+Bagalkot)&t=&z=17&ie=UTF8&iwloc=B&output=embed',
+  /** Official Google Maps place page for the college (client-provided canonical link). */
+  mapsPlaceUrl:
+    'https://www.google.com/maps/place/Prarthana+P+U+Science+College+Bagalkot/@16.1790954,75.6905481,52m/data=!3m1!1e3!4m6!3m5!1s0x3bc778f3349a462f:0x27050572c74ff80a!8m2!3d16.1790607!4d75.6906218',
+  /** Turn-by-turn directions to the campus. */
+  mapsDirectionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=16.1790607%2C75.6906218&destination_place_id=ChIJL0aaNPN4xzsRCvhPx3IFBSc',
   social: {
     facebook: 'https://facebook.com/prarthanapusciencecollege',
     instagram: 'https://instagram.com/prarthanapusciencecollege',

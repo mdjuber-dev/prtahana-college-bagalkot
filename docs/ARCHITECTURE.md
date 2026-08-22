@@ -1,170 +1,106 @@
-# Prarthana PU College - Architecture
+# Architecture — Prarthana PU Science College, Bagalkot
 
-## Summary
+Production site: <https://prarthanapucollegebagalkot.in>
 
-Full-stack web application for Prarthana PU Science College, Bagalkot. Single-repo deployment with a React + Vite frontend and Express + Node.js backend, both serving from the same origin in production. PostgreSQL (Neon) for data persistence. Supabase Edge Functions for Google Sheets integration.
+## Stack
 
-## Architecture Diagram
+| Layer | Technology | Hosting |
+| --- | --- | --- |
+| Frontend | React 18 + TypeScript + Vite | Cloudflare (static SPA) |
+| Backend API | Node.js + Express | Render |
+| Database | PostgreSQL | Neon (managed Postgres) |
+| Media storage | PostgreSQL `media_uploads.data` (base64) + ephemeral disk cache | Neon / Render disk |
+| Edge worker | Cloudflare Worker (SPA fallback) | Cloudflare |
+| Secrets | Platform env vars only (`.env` is gitignored) | — |
+
+## Repositories / Git remotes
+
+- `origin` → `mdjuber-dev/prtahana-college-bagalkot.git` (primary working repo)
+- `client` → `prarthanapusciencecollegeweb/prarthanaclgbgk.git`
+
+## Request flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          CLIENTS                                   │
-│                                                                     │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐         │
-│  │   Browser    │    │  Mobile App  │    │  Admin Panel │         │
-│  │  (Public)    │    │  (Any)       │    │  (Protected) │         │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘         │
-│         │                   │                   │                 │
-└─────────┼───────────────────┼───────────────────┼─────────────────┘
-          │                   │                   │
-          ▼                   │                   │
-  ┌──────────────────────────────────────────────────┐ │
-  │              PRODUCTION (single origin)          │ │
-  │                                                  │ │
-  │  ┌──────────────────┐  ┌──────────────────┐     │ │
-  │  │  Express API     │  │ Static Assets    │     │ │
-  │  │  (server/)       │  │ (public/)         │     │ │
-  │  │                  │  │                   │     │ │
-  │  │  /api/*          │  │  /images/*        │     │ │
-  │  │  /sitemap.xml    │  │  /logo.png         │     │ │
-  │  │  SPA fallback    │  │  /favicon-*        │     │ │
-  │  └────────┬─────────┘  └──────────────────┘     │ │
-  │           │                                      │ │
-  │           ▼                                      │ │
-  │  ┌────────────────────────────────────────┐     │ │
-  │  │       PostgreSQL (Neon)                │     │ │
-  │  │                                        │     │ │
-  │  │  Tables:                               │     │ │
-  │  │   - admissions                        │     │ │
-  │  │   - announcements                     │     │ │
-  │  │   - general_enquiries                 │     │ │
-  │  │   - career_jobs                      │     │ │
-  │  │   - career_applications              │     │ │
-  │  │   - site_cms                         │     │ │
-  │  │   - dashboard_configs                │     │ │
-  │  │   - gallery                          │     │ │
-  │  │   - admin_users                      │     │ │
-  │  └────────────────────────────────────────┘     │ │
-  └──────────────────────────────────────────────────┘ │
-          │                                           │
-          └───────────────────────────────────────────┘
-                           │
-          ┌────────────────▼────────────────┐
-          │          DEV MODE              │
-          │                                  │
-          │  Vite Dev Server (5173)         │
-          │   ── proxy /api ─→ Express 3000  │
-          │   ── proxy /images ─→ 3000      │
-          │                                  │
-          │  Express Backend (3000)          │
-          │   ── PostgreSQL (Neon)           │
-          └──────────────────────────────────┘
+Browser
+  → Cloudflare (prarthanapucollegebagalkot.in)
+       ├─ /assets, /images, robots.txt, sitemap.xml, static → served from Worker assets (dist)
+       ├─ /admin, /about, … (SPA paths) → index.html (SPA fallback)
+       └─ /api/*  → NOT proxied here; the browser calls the API directly:
+                       https://prarthanaclgbgk.onrender.com/api/*
 ```
 
-## Components
+The frontend never exposes `/api` on the production domain. The React app calls the
+Render backend directly over `https://prarthanaclgbgk.onrender.com`. CORS on the backend
+allow-lists the production origin (`prarthanapucollegebagalkot.in` + `www`) and (dev only)
+`localhost`.
 
-### Frontend (`src/`)
+## API base URL (important)
 
-- **Framework**: React 18 + TypeScript + Vite 5
-- **Routing**: React Router DOM v6
-- **Styling**: Tailwind CSS with custom design tokens
-- **State**: React Context (`cms-context.tsx`), localStorage for admin auth
-- **Build**: `npm run build` → `dist/` (2484 modules, static files)
+`src/lib/api.ts → getBaseUrl()` resolves the backend host:
 
-**Key directories:**
-- `src/pages/` - Route page components (public + admin)
-- `src/components/` - Reusable UI components and section blocks
-- `src/lib/` - API client, types, utilities, config
-- `src/lib/api.ts` - Centralized API client with JWT auth, retry logic
+1. `VITE_API_BASE_URL` (set in `.env.production` to the Render URL).
+2. Vite injects it at build time; a mistyped or frontend-only host is **rejected in
+   production builds** and falls back to the canonical Render URL, so a bad env value can
+   never break the site.
+3. Dev fallback: `http://localhost:3000`.
 
-### Backend (`server/index.js`)
+## Key frontend files
 
-- **Runtime**: Node.js + Express
-- **Database**: PostgreSQL via `pg` Pool (Neon)
-- **Auth**: JWT (HMAC-SHA256), `ADMIN_PASSWORD` env var, `admin_users` table for email validation
-- **Static Serving**: Serves `public/` directory and `dist/` (production)
-- **SPA Fallback**: Catch-all route serves `index.html` for non-API routes
+- `src/App.tsx` — route table; lazy-loaded pages; wraps everything in `CMSProvider`.
+- `src/lib/api.ts` — fetch client, typed `ApiError` (status-aware), session-storage token.
+- `src/lib/site-config.ts` — static config: name, address, contacts, **map coordinates**,
+  `pageMeta` (per-route SEO), `mapsEmbed`, `mapsPlaceUrl`, `mapsDirectionsUrl`.
+- `src/lib/cms-context.tsx` — loads `/api/site-cms`; falls back to static config; merges
+  stored CMS over defaults.
+- `src/lib/admin-auth.ts` — `getCurrentAdminAccess()`; a *network* failure does **not**
+  sign the admin out (only 401/403 does).
+- `src/components/shared/seo-head.tsx` — emits `<title>`, meta, canonical, OG/Twitter,
+  robots, and JSON-LD. Dynamically resolves metadata for `/admin/*`,
+  `/announcements/:id`, `/careers/:slug` so admin screens are `noindex` and dynamic pages
+  get a self-canonical URL.
+- `src/components/shared/navbar.tsx` — fluid sizing (clamp-based) so all 10 links + Apply
+  Now fit on one row from 1280px up; collapses to a hamburger below that.
+- `src/components/popup/announcement-popup.tsx` — shows the highest-priority **presentable**
+  announcement once per browser session after a 3s delay; skips blank/incomplete rows.
+- `src/pages/contact-page.tsx` — Google Map embed (zoom 17) using the official college
+  coordinates, with "Open in Google Maps" and "Get Directions" links.
 
-**API Endpoints:**
+## Key backend files (`server/index.js`)
 
-| Resource | GET | POST | PATCH | DELETE | Auth |
-|---|---|---|---|---|---|
-| `/api/health` | ✓ | | | | None |
-| `/api/admissions` | ✓ | ✓ (public) | ✓ | ✓ | Admin |
-| `/api/announcements` | ✓ | ✓ | ✓ | ✓ | Admin (write), Public (read) |
-| `/api/general-enquiries` | ✓ | ✓ (public) | ✓ | ✓ | Admin |
-| `/api/enquiries` | ✓ | | | | Admin |
-| `/api/career-jobs` | ✓ | ✓ | ✓ | ✓ | Admin (write), Public (read) |
-| `/api/career-applications` | ✓ | ✓ (public) | ✓ | ✓ | Admin |
-| `/api/site-cms` | ✓ | | | | Public (read), Admin (write) |
-| `/api/site-cms/:key` | ✓ | | ✓ (PUT) | | Public (read), Admin (write) |
-| `/api/dashboard-configs` | ✓ | ✓ | ✓ | | Admin |
-| `/api/gallery` | ✓ | ✓ | ✓ | ✓ | Admin (write), Public (read) |
-| `/sitemap.xml` | ✓ | | | | None |
+- `verifyToken(token)` — HMAC-signed stateless session (base64url payload + signature).
+  Malformed/forged tokens return `null` → `401` (never a 500).
+- `requireAdmin` — rejects unauthenticated requests with `401`.
+- Public endpoints: `/api/health`, `/api/announcements`, `/api/gallery`, `/api/career-jobs`,
+  `/api/site-cms`, `/api/media`, `/api/chatbot-knowledge`, `/api/contact`,
+  `/api/admission`, `/api/career-applications`, `/api/general-enquiry`,
+  `/api/auth/login`, `/api/auth/me`.
+- Admin endpoints (require token): `/api/admissions`, `/api/enquiries`,
+  `/api/career-applications*`, `/api/dashboard-configs`, `/api/admin-users`,
+  `/api/announcements` (`?admin=true`), `/api/gallery/list` (`?admin=true`),
+  `/api/media/library`, `/api/media/upload`, `/api/site-cms/*`, `/api/settings/*`,
+  `/api/analytics/*`.
+- Resume serving (`/api/career-applications/:id/resume`): **reads from the database first**
+  (`media_uploads.data`), then falls back to the disk cache. This matters because Render's
+  filesystem is ephemeral — without the DB read, resumes uploaded after a deploy would be
+  lost.
+- Seeding: `initAnnouncementsTable()` only inserts sample rows when the table is genuinely
+  new (detected via `tableExists`). It never re-seeds an existing table, so production data
+  is never overwritten or duplicated.
 
-### Database (PostgreSQL on Neon)
+## Data safety rules (enforced during this audit)
 
-- **Migrations**: `supabase/migrations/` (20 files, Chronological naming)
-- **Schema**: All tables in `public` schema with Row Level Security (RLS)
-- **Admin Access**: `admin_users` table + `is_admin()` function for auth checks
+- No production DB data was modified, deleted, or fabricated.
+- Admin credentials were not changed.
+- Seeding is guarded so it cannot re-inject demo rows into a live table.
 
-### Supabase Edge Functions
+## Build & deploy
 
-- `submit-to-google-sheets` - Forwards admission/enquiry data to Google Apps Script
-- Deployed for production; not needed in local dev (Express handles everything)
-
-### Environment Variables
-
-| Variable | Dev | Production |
-|---|---|---|
-| `DATABASE_URL` | Neon PostgreSQL | Neon PostgreSQL |
-| `ADMIN_PASSWORD` | `admin@prarthanapu` | (set via Render/Neon) |
-| `VITE_API_BASE_URL` | `http://localhost:3000` | `https://prarthanapucollegebagalkot.in` |
-| `PORT` | `3000` | `3000` (via Render) |
-| `SESSION_SECRET` | (from .env) | (set via Render) |
-
-## Data Flow
-
-### Public Admission Form Submission
-```
-1. User fills form → frontend POSTs to /api/admissions
-2. server/index.js sanitizeAdmissionPayload() validates input
-3. insertRow("admissions", payload, admissionColumns) inserts to PostgreSQL
-4. PostgreSQL auto-generates application_id, reference_code
-5. Response returns inserted row with all defaults applied
-6. (Optional) Client triggers Supabase Edge Function → Google Sheets
-```
-
-### Admin Panel
-```
-1. Admin logs in → POST /api/auth/login → receives JWT token
-2. Token stored in localStorage
-3. All admin API calls include Bearer token
-4. requireAdmin middleware verifies token via verifyToken()
-5. Admin can CRUD: admissions, announcements, enquiries, jobs, applications, CMS, gallery, dashboard
+```bash
+npm install
+npm run build        # tsc -b && vite build  → dist/
+# Frontend: deploy dist/ to Cloudflare (existing Worker + custom domain)
+# Backend:  push server/ to Render (auto-deploys), which runs `npm install && npm start`
 ```
 
-### CMS Configuration
-```
-1. Public pages read CMS via GET /api/site-cms/:key (no auth)
-2. Admin edits via PUT /api/site-cms/:key (upsert via INSERT ON CONFLICT)
-3. CMS stores JSONB `value` column with nested config
-4. Frontend merges CMS data with hardcoded siteConfig defaults
-```
-
-### Announcement Popup
-```
-1. On any non-admin page, AnnouncementPopup component mounts
-2. Fetches GET /api/announcements (public, status='published')
-3. Finds first non-dismissed featured/published announcement
-4. Shows popup after 3-second delay
-5. User can dismiss (localStorage) or click CTA
-```
-
-## Deployment
-
-- **Frontend**: Built via `npm run build`, static files served by Express
-- **Backend**: `node server/index.js` on Render (port from env)
-- **Database**: Neon PostgreSQL (serverless)
-- **Domain**: `prarthanapucollegebagalkot.in`
-- **SSL**: Handled by Render
+`wrangler.toml` — Worker name `prarthana-pu-college`, assets dir `dist`,
+`custom_domain = prarthanapucollegebagalkot.in`.

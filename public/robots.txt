@@ -1,8 +1,27 @@
 User-agent: *
 Allow: /
 
+# Restricted administration area — never index
+Disallow: /admin
 Disallow: /admin/
-Disallow: /admin/login
+Disallow: /api/
+Disallow: /uploads/career-applications/
+
+# Search engines are explicitly welcome on all public pages
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /uploads/career-applications/
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
 Disallow: /api/
 Disallow: /uploads/career-applications/
 
